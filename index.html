@@ -1,0 +1,1907 @@
+<!DOCTYPE html><html>
+<head>
+<title>Novel Methods for Natural Language Generationin Spoken Dialogue Systems</title>
+<!--Generated on Sat Feb 10 21:02:05 2018 by LaTeXML (version 0.8.2) http://dlmf.nist.gov/LaTeXML/.-->
+<!--Document created on 2017.-->
+
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
+<link rel="stylesheet" href="https://www.w3schools.com/lib/w3.css">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Serif">
+<style>
+h1, h2, h3, h4, h5, h6 {
+  font-family: "Noto Sans", sans-serif;
+}
+h2 {
+  margin-top: 2em;
+  background: #ddd;
+}
+html, body {
+  font-family: "Noto Serif", serif;
+}
+body {
+    max-width: 900px;
+    margin: auto;
+    padding: 1em 2em;
+}
+figure, table {
+    padding: 1.5em;
+}
+figcaption {
+    padding-top: 1em;
+}
+cite {
+    font-style: normal;
+}
+</style>
+</head>
+<body>
+<div>
+<div>
+<article>
+<h1>Novel Methods for Natural Language Generation
+<br>in Spoken Dialogue Systems</h1>
+<div>
+
+Ondřej Dušek
+
+</div>
+<div>2017</div>
+<section id="Ch1">
+<h2>1&nbsp;&nbsp; Introduction</h2>
+<div id="Ch1.p1">
+<p>The task of natural language generation (NLG) is to <strong>convert an abstract meaning representation into a natural language text</strong>. NLG is an integral part of various natural language processing (NLP) applications, including spoken dialogue systems (SDSs), i.e., computer interfaces allowing users to perform various tasks or request information using spoken dialogue.
+</p><p>
+In SDSs, the task of NLG is to convert an abstract representation of the system’s response into a natural language sentence, which is read to the user using a text-to-speech synthesis module (see Figure <a href="#Ch3.F1">1.1</a>).
+NLG is thus responsible for accurate, comprehensible, and natural presentation of information provided by the SDS and has a significant impact on the overall perception of the system by the user.</p>
+</div>
+<figure id="Ch1.F1"><img src="figs/sds-schema.png" id="Ch1.F1.g1">
+<figcaption>Figure 1.1: A schema of a typical SDS, with the NLG component highlighted.</figcaption>
+</figure>
+<div id="Ch1.p2">
+<p>The main motivation for this work has been the lack of practical statistical approaches in NLG for SDSs: The adoption of statistical NLG in SDSs remained limited until recently, and the NLG component was often reduced to a simple template-filling approach.
+Although statistical approaches to NLG have advanced greatly during the past year or two with the advent of neural network (NN) based systems, they still leave room for improvement in terms of naturalness, adaptability, and linguistic insight.</p>
+</div>
+<section id="Ch1.S1">
+<h3>
+1.1 Objectives and Contributions</h3>
+
+<div id="Ch1.S1.p1">
+<p>The main aim of this thesis is to <strong>explore the usage of statistical methods in NLG for SDSs and advance the state-of-the art in naturalness and adaptability.</strong> We focus on enabling fast reuse in new domains and languages, and we aim at adapting the generated sentences to the communication goal, to the current situation in the dialogue, and to the particular user.
+</p><p>
+This work thus not only brings a radical improvement over NLG systems based on handwritten rules or domain-specific templates, but also represents an important contribution to recent works in statistical NLG by experimenting with deep-syntactic generation, multilingual NLG, and user-adaptive models.
+</p>
+</div>
+<div id="Ch1.S1.p2">
+<p>Our experiments, and also the main contributions of this thesis, proceed along the following key objectives:</p>
+</div>
+<ol style="list-style-type: upper-latin;"><li>
+<div id="Ch1.S1.p3">
+<p><strong>Generator easily adaptable for different domains.</strong> We create a generator that can be fully and easily retrained from data for a given domain. Unlike previous methods, our generator does not require fine-grained alignments between elements of the input meaning representation and output words and phrases.</p>
+</div>
+</li><li>
+<div id="Ch1.S1.p4">
+<p><strong>Generator easily adaptable for different languages.</strong> We adapt a rule-based surface realizer to a new language and simplify it by introducing statistical components. In addition, we experiment with fully statistical NN-based NLG on both English and Czech for the first time.</p>
+</div>
+</li><li>
+<div id="Ch1.S1.p5">
+<p><strong>Generator that adapts to the user.</strong> We create a first fully trainable context-aware NLG system that is able to adapt the generated responses to the wording and syntax of the user’s requests.</p>
+</div>
+</li><li>
+<div id="Ch1.S1.p6">
+<p><strong>Comparing different NLG system architectures.</strong> We experiment with both major approaches used in modern NLG systems, <em>pipeline</em> (separating high-level sentence structuring from surface grammatical rules) and <em>joint</em> (end-to-end), and we compare their results on the same dataset.</p>
+</div>
+</li><li>
+<div id="Ch1.S1.p7">
+<p><strong>Dataset availability for NLG in SDSs.</strong> We address the limited availability of datasets for NLG in task-oriented SDSs by collecting and publicly releasing two different novel datasets: the first dataset for training context-aware NLG systems and the first Czech NLG dataset.</p>
+</div>
+</li></ol>
+</section>
+</section>
+<section id="Ch2">
+<h2>
+2&nbsp;&nbsp; State of the Art: Adaptive Methods in NLG</h2>
+
+<div id="Ch2.p1">
+<p>In this chapter, we give an introduction into the problem of NLG and briefly discuss previous architectures and available training datasets.</p>
+</div>
+<div id="Ch2.p2">
+<p>In general, NLG is defined as the task of presenting information in natural language: Given input data and a communication goal (e.g., to describe the data or receive user reaction), the system should produce a natural language string that is relevant, well-formed, grammatically correct, and fluent <cite>(Dale et al., <a href="#bib.bib125">1998</a>)</cite>.</p>
+</div>
+<section id="Ch2.S1">
+<h3>
+2.1 The NLG Pipeline</h3>
+
+<div id="Ch2.S1.p1">
+<p>The standard “textbook” description of an NLG system <cite>(Reiter and Dale, <a href="#bib.bib84">2000</a>)</cite> involves a pipeline consisting of three main phases:</p>
+<ol id="Ch2.I1">
+<li id="Ch2.I1.i1">
+<div id="Ch2.I1.i1.p1">
+<p><em>Content planning</em> – selecting relevant content from the input data and basic structuring of this content,</p>
+</div>
+</li>
+<li id="Ch2.I1.i2">
+<div id="Ch2.I1.i2.p1">
+<p><em>Sentence planning</em> (also called <em>microplanning</em>) – detailed sentence shaping and expression
+selection,</p>
+</div>
+</li>
+<li id="Ch2.I1.i3">
+<div id="Ch2.I1.i3.p1">
+<p><em>Surface realization</em> – linearization of the sentence plan according to the grammar of the target language.</p>
+</div>
+</li>
+</ol>
+</div>
+<div id="Ch2.S1.p2">
+<p>Most NLG systems follow the standard pipeline more or less closely, but only a few of them implement it as a whole. Many generators focus only on one of the phases while using a very basic implementation of the other or leaving it out completely. NLG systems in SDSs often let the dialogue manager handle content planning and focus only on sentence planning and surface realization.</p>
+</div>
+<div id="Ch2.S1.p3">
+<p>Some NLG systems choose to replace the pipeline with a joint, end-to-end architecture <cite>(e.g., Angeli et al., <a href="#bib.bib22">2010</a>; Mairesse et al., <a href="#bib.bib20">2010</a>)</cite>.
+Both approaches can offer their own advantages:
+Dividing the problem of NLG into several subtasks makes the individual subtasks simpler. A sentence planner can abstract away from complex surface syntax and morphology and only concern itself with a high-level sentence structure. It is also possible to reuse third-party modules for parts of the generation pipeline <cite>(Walker et al., <a href="#bib.bib81">2001</a>)</cite>.
+On the other hand, the problem of pipeline approaches in general is error propagation. In addition, joint methods do not need to model intermediate structures explicitly <cite>(Konstas and Lapata, <a href="#bib.bib5">2013</a>)</cite>.</p>
+</div>
+</section>
+<section id="Ch2.S2">
+<h3>2.2 Handcrafted and Trainable Methods</h3>
+
+<div id="Ch2.S2.p1">
+<p>Traditional NLG systems are based on procedural rules <cite>(Bangalore and Rambow, <a href="#bib.bib86">2000</a>; Belz, <a href="#bib.bib61">2005</a>; Ptáček and Žabokrtský, <a href="#bib.bib46">2007</a>)</cite>, template filling <cite>(Rudnicky et al., <a href="#bib.bib119">1999</a>; van Deemter et al., <a href="#bib.bib62">2005</a>)</cite>, or grammars in various formalisms.
+Such rule-based generators are still used frequently today. Their main advantages are implementation simplicity and speed, but many rule-based systems struggle to achieve high coverage in larger domains <cite>(White et al., <a href="#bib.bib49">2007</a>)</cite> and are not easy to adapt for different domains and/or languages. Rule-based systems also tend to exhibit little variation in the output, which makes them appear repetitive and unnatural.
+</p>
+</div>
+<div id="Ch2.S2.p2">
+<p>Various approaches have been taken to make NLG output more flexible and natural as well as to simplify its reuse in new domains.
+While statistical methods and trainable modules in NLG are not new <cite>(cf.  Langkilde and Knight, <a href="#bib.bib88">1998</a>)</cite>, their adoption has been slower than in most other subfields of NLP.
+Several research paths were pursued for statistical NLG in the last decade; most of them focus on just one of the generation stages or on enhancing the capabilities of an existing rule-based generator, e.g., by introducing trainable parameters <cite>(Paiva and Evans, <a href="#bib.bib59">2005</a>; Mairesse and Walker, <a href="#bib.bib33">2008</a>)</cite>.
+Fully trainable statistical NLG <cite>(Mairesse et al., <a href="#bib.bib20">2010</a>; Angeli et al., <a href="#bib.bib22">2010</a>)</cite> has been rare.
+Only in the past year or two, new fully trainable NN-based generators <cite>(e.g., Wen et al., <a href="#bib.bib100">2015b</a>, <a href="#bib.bib99">a</a>, but also work described in this thesis)</cite> have been dominating the field.</p>
+</div>
+</section>
+<section id="Ch2.S3">
+<h3>2.3 NLG Training Datasets</h3>
+
+<div id="Ch2.S3.p1">
+<p>The number of publicly available datasets suitable for NLG experiments is rather small, compared to other areas of NLP.
+Publicly available datasets are more common in text-based NLG than in NLG for SDSs <cite>(Sripada et al., <a href="#bib.bib175">2003</a>; Wong and Mooney, <a href="#bib.bib45">2007</a>; Liang et al., <a href="#bib.bib34">2009</a>)</cite>.
+However, most of text-based NLG sets assume a content selection step, which is not applicable to our work.</p>
+</div>
+<div id="Ch2.S3.p2">
+<p>Publicly available corpora for NLG in SDSs have been up until now very scarce:
+<cite>Mairesse et al. (<a href="#bib.bib20">2010</a>)</cite> published a dataset of 404 restaurant recommendations, which includes detailed semantic alignments (see Section <a href="#Ch3.S2">3.2</a>).
+<cite>Wen et al. (<a href="#bib.bib100">2015b</a>, <a href="#bib.bib99">a</a>)</cite> present two similar sets for restaurant and hotel information domains, both containing over 5,000 instances but lots of repetition.
+Similar but larger and more diverse datasets for laptop and TV recommendation domains have been released recently by <cite>Wen et al. (<a href="#bib.bib164">2016</a>)</cite>, who focus on domain adaptation.</p>
+</div>
+</section>
+</section>
+<section id="Ch3">
+<h2>
+3&nbsp;&nbsp; Decomposing the Problem</h2>
+
+<div id="Ch3.p1">
+<p>This chapter provides a methodological background for all our experiments in Chapters <a href="#Ch4">4</a> through <a href="#Ch8">8</a>: it is concerned with a closer definition of the task that we are solving, as well as with defining some of the basic aims and features common to all NLG systems developed in the course of this thesis.</p>
+</div>
+<section id="Ch3.S1">
+<h3>3.1 The Input Meaning Representation</h3>
+
+<div id="Ch3.S1.p1">
+<p>Throughout our experiments in this thesis, we use a version of the dialogue act (DA) meaning representation <cite>(Young et al., <a href="#bib.bib26">2010</a>; Jurčíček et al., <a href="#bib.bib123">2014</a>; Wen et al., <a href="#bib.bib99">2015a</a>)</cite>. Here, a DA is simply a list of triplets (DA items) in the following form:</p>
+<ul id="Ch3.I1">
+<li id="Ch3.I1.i1">
+<p><em>DA type</em> – the type of the utterance or a dialogue act per se, e.g., <em>hello</em>, <em>inform</em>, or <em>request</em>.</p>
+</li>
+<li id="Ch3.I1.i2">
+<p><em>slot</em> – the slot (domain attribute) that the DA is concerned with, e.g., <em>departure_time</em> or <em>price_range</em>.</p>
+
+</li>
+<li id="Ch3.I1.i3">
+<p><em>value</em> – the particular value of the slot in the DA item.</p>
+</li>
+</ul>
+<p>The latter two members of the triplet can be optional (or null). For instance, the DA type <em>hello</em> does not use any slots or values, and the DA type <em>request</em> uses slots but not values since it is used to request a value from the user. DA items with identical DA type are joined in figures for brevity (see Figure <a href="#Ch3.F1">3.1</a>).</p>
+</div>
+</section>
+<section id="Ch3.S2">
+<h3>3.2 Using Unaligned Data</h3>
+
+<figure id="Ch3.F1"><img src="figs/x1.png" id="Ch3.F1.g1"  width="474" height="163" alt="">
+<figcaption>Figure 3.1: A training data instance for NLG from dialogue acts, with manual fine-grained alignments, which are not needed for our generators.</figcaption>
+</figure>
+<div id="Ch3.S2.p1">
+<p>In all our experiments, we use <em>unaligned</em> pairs of input DAs and output sentences. This simplifies training data acquisition:
+Previous NLG systems usually required a separate training data alignment step <cite>(Mairesse et al., <a href="#bib.bib20">2010</a>; Konstas and Lapata, <a href="#bib.bib5">2013</a>)</cite>, and this is now no longer needed since our sentence planners learn alignments jointly with learning to generate (see Figure <a href="#Ch3.F1">3.1</a>). In addition, alignments are not decided by hard, binary decisions, which allows for a more fine-grained modeling.</p>
+</div>
+</section>
+<section id="Ch3.S3">
+<h3>3.3 Delexicalization</h3>
+
+<figure id="Ch3.F2">
+<table>
+<tr>
+<td><span  style="color:#333399;">inform(</td>
+<td><span  style="color:#333399;">name=“Gourmet Burger Kitchen”, type=placetoeat,</td>
+</tr>
+<tr>
+<td></td>
+<td><span  style="color:#333399;">eattype=restaurant, area=“city centre”, near=“Tatties (Trinity Street)”,</td>
+</tr>
+<tr>
+<td></td>
+<td><span  style="color:#333399;">food=“Cafe food”, food=English)</td>
+</table>
+<table>
+</tr>
+<tr>
+<td>Gourmet Burger Kitchen is an English and cafe food restaurant in the city centre</td>
+</tr>
+<tr>
+<td>near Tatties (Trinity Street).</td>
+</tr>
+</table>
+<table>
+<tr>
+<td><span  style="color:#333399;">inform(</td>
+<td><span  style="color:#333399;">name=X-name, type=placetoeat, eattype=restaurant,</td>
+</tr>
+<tr>
+<td></td>
+<td><span  style="color:#333399;">area=“city centre”, near=X-near, food=“Cafe food”, food=“English”)</td>
+</tr>
+</table>
+<table>
+<tr>
+<td>
+X-name is an English and cafe food restaurant in the city centre near X-near.</td>
+</tr>
+</table>
+<figcaption>Figure 3.2: Delexicalization example (from the BAGEL dataset).</figcaption>
+<p><span  style="font-size:90%;">From top to bottom: lexicalized DA, lexicalized sentence, delexicalized DA, delexicalized sentence. Placeholders in delexicalized items are highlighted.</p>
+</figure>
+<div id="Ch3.S3.p1">
+<p>In all our experiments, we use <em>delexicalization</em> – the replacing of some values, such as restaurant names or time constants, with placeholders (see Figure <a href="#Ch3.F2">3.2</a>). The generator then only works with these placeholders, which are replaced with the respective values in a simple postprocessing stage. This helps to reduce data sparsity issues and improves generalization to unseen slot values since the possible number of values for some slots is unbounded in theory, and most values are only seen once or never in the training data.</p>
+</div>
+<div id="Ch3.S3.p2">
+<p>Note that delexicalization is different from using full, fine-grained semantic alignments (see Section <a href="#Ch3.S2">3.2</a>) and can easily be obtained automatically using simple string replacement rules as the values to be delexicalized occur verbatim in training data (possibly in an inflected form for Czech, see Chapter <a href="#Ch8">8</a>).</p>
+</div>
+</section>
+<section id="Ch3.S4">
+<h3>
+3.4 Separating the Stages</h3>
+
+<figure id="Ch3.F3"><img src="figs/x2.png" id="Ch3.F3.g1"  width="342" height="267" alt="">
+<figcaption>Figure 3.3: Example t-tree (middle, t-lemmas in black and formemes in purple), with the corresponding DA (top) and natural language paraphrase (bottom).</figcaption>
+</figure>
+<div id="Ch3.S4.p1">
+<p>We will explore both approaches to NLG sketched in Section <a href="#Ch2.S1">2.1</a>: two-step generation with separate sentence planning and surface realization steps and joint, end-to-end, one-step direct generation. We believe that both avenues have their own advantages and disadvantages (cf. Section <a href="#Ch2.S1">2.1</a>), and that both of them should be explored.</p>
+</div>
+<div id="Ch3.S4.p2">
+<p>We opted for using sentence plans in the form of simplified deep syntactic trees (tectogrammatical trees or t-trees) based on the Functional Generative Description <cite>(Sgall et al., <a href="#bib.bib94">1986</a>)</cite> as the intermediate data representation between the stages (sentence plan) due to three main reasons: t-tree surface realization is viable and straightforward (<cite>Ptáček and Žabokrtský, <a href="#bib.bib46">2007</a>; Žabokrtský et al., <a href="#bib.bib42">2008</a></cite>; see Chapter <a href="#Ch4">4</a>), there are efficient algorithms for projective tree structures such as t-trees, and automatic domain-independent parsers into t-trees for several languages are available <cite>(Popel and Žabokrtský, <a href="#bib.bib24">2010</a>)</cite>.</p>
+</div>
+<div id="Ch3.S4.p3">
+<p>The t-tree sentence plan structure is a deep-syntactic dependency tree that only contains nodes for content words (nouns, full verbs, adjectives, adverbs) and coordinating conjunctions (see Figure <a href="#Ch3.F3">3.3</a>). The nodes maintain surface word order. Each node has several attributes; the most important ones for our experiments are <em>t-lemma</em> or deep lemma (base word form of the content word) and <em>formeme</em> (a morphosyntactic label describing the word form).</p>
+</div>
+</section>
+<section id="Ch3.S5">
+<h3>
+3.5 Evaluation Metrics</h3>
+
+<div id="Ch3.S5.p1">
+<p>Several different approaches have been applied to evaluating NLG <cite>(Hastie and Belz, <a href="#bib.bib275">2014</a>; Gkatzia and Mahamood, <a href="#bib.bib242">2015</a>)</cite>: intrinsic, further divided into automatic scores and human ratings, and extrinsic, such as users’ success in completing a task based on information provided by the NLG output.
+In this work, we limit ourselves to evaluating our systems intrinsically.</p>
+</div>
+<div id="Ch3.S5.p2">
+<p>Automatic intrinsic NLG evaluation typically uses metrics developed for machine translation (MT) which are based on word-by-word comparisons against reference texts, measuring word overlap.
+This approach is cheap and fast, but correspondence to human judgments has been disputed <cite>(Stent et al., <a href="#bib.bib243">2005</a>; Callison-Burch et al., <a href="#bib.bib241">2006</a>)</cite>.
+Manual human evaluation provides a more accurate estimate of an NLG system’s performance, but requires much more resources. Both approaches are therefore combined in practice.</p>
+</div>
+<div id="Ch3.S5.p3">
+<p>For automatic metrics, we use BLEU <cite>(Papineni et al., <a href="#bib.bib78">2002</a>)</cite> and NIST <cite>(Doddington, <a href="#bib.bib79">2002</a>)</cite> to evaluate our experiments, two of the oldest and arguably the most widely used metrics for NLG. In addition, we apply a complementary metric that is only applicable to delexicalized NLG: <em>slot error rate</em> which estimates the number of semantic errors based on counting DA value placeholders in the generated output <cite>(Wen et al., <a href="#bib.bib99">2015a</a>)</cite>.
+For human evaluation, our task is to decide which system variant will provide outputs preferable to users. Therefore, we focus on direct comparisons of outputs generated for the same input DA, asking users which variant is better/preferred. This promises more consistent and efficient ratings than using Likert scales or multiple judgment criteria <cite>(Callison-Burch et al., <a href="#bib.bib259">2007</a>; Koehn, <a href="#bib.bib276">2010</a>, p. 220)</cite>.</p>
+</div>
+</section>
+</section>
+<section id="Ch4">
+<h2>
+4&nbsp;&nbsp; Experiments in Surface Realization</h2>
+
+<div id="Ch4.p1">
+<p>This chapter is an account of our own experiments with surface realization – generating natural language sentences from t-trees (cf. Section <a href="#Ch3.S4">3.4</a>).
+Based on a similar module for Czech, we developed a new general-domain, mostly rule-based surface realizer for English, which is used in our experiments with full generation from DAs in Chapters <a href="#Ch5">5</a> and <a href="#Ch6">6</a>. We also introduced into the realizer pipeline a new statistical module for morphological inflection (called <em>Flect</em>) and show that it improves on dictionary-based modules.</p>
+</div>
+<section id="Ch4.S1">
+<h3>
+4.1 Constructing a Rule-based Surface Realizer for English</h3>
+
+<div id="Ch4.S1.p1">
+<p>Our English surface realizer was developed within the Treex NLP framework <cite>(Popel and Žabokrtský, <a href="#bib.bib24">2010</a>)</cite>, where it mostly adapts Czech realizer pipeline modules <cite>(Žabokrtský et al., <a href="#bib.bib42">2008</a>; Popel, <a href="#bib.bib191">2009</a>, p. 84ff.)</cite> and shares their language-independent code components.
+It starts from a copy of the input t-tree, gradually transforming it into a surface dependency tree, which is then linearized (see Figure <a href="#Ch4.F1">4.1</a>). It handles all the important surface language phenomena: auxiliary words, inflection, word order, agreement, punctuation, and capitalization.</p>
+</div>
+<figure id="Ch4.F1"><img src="figs/x3.png" id="Ch4.F1.g1"  width="677" height="170" alt="">
+<figcaption>Figure 4.1: Rule-based surface realization pipeline example.</figcaption>
+<p><span  style="font-size:90%;">The t-tree for the sentence “The cats would have jumped through the window.” is gradually transformed into a surface dependency tree (a-tree). Uninflected words are shown in red in a-trees, dependency labels are shown in blue. From the left: (1) morphological attributes are determined, word order and agreement are enforced. (2 and 3) prepositions and articles are added. (4) auxiliary verbs are added. (5) punctuation is added, words are inflected, and sentence start is capitalized.</p>
+</figure>
+<div id="Ch4.S1.p2">
+<p>To evaluate the realizer on a broad domain, we ran a round-trip test: We first automatically analyzed English texts into t-trees using Treex, then ran our surface realizer to regenerate texts and evaluated the results using BLEU score <cite>(Papineni et al., <a href="#bib.bib78">2002</a>)</cite> against the originals. On texts from the Prague Czech-English Dependency Treebank 2.0 <cite>(Hajič et al., <a href="#bib.bib14">2012</a>)</cite>, the realizer reached a BLEU of 77.47%. This score is relatively high given that the original is used as the only reference and even minor deviations are penalized.</p>
+</div>
+<div id="Ch4.S1.p3">
+<p>Our realizer has been successfully applied in our NLG experiments in Chapters <a href="#Ch5">5</a> and <a href="#Ch6">6</a> as well as in TectoMT translation systems translating into English from Czech, Dutch, Spanish, and Basque <cite>(Rosa et al., <a href="#bib.bib196">2015</a>; Popel et al., <a href="#bib.bib195">2015</a>)</cite>.</p>
+</div>
+</section>
+<section id="Ch4.S2">
+<h3>
+4.2 Statistical Morphology Generation</h3>
+
+<figure id="Ch4.F2"><img src="figs/x4.png" id="Ch4.F2.g1"  width="333" height="118" alt="">
+<figcaption>Figure 4.2: The task of morphological generation is to create a fully inflected form (right) from a base word form and morphological information (left).</figcaption>
+</figure>
+<div id="Ch4.S2.p1">
+<p>To simplify surface realizer development, we introduced a new statistical module for word inflection generation, i.e., deducing the inflected word form given its lemma (base form) and the desired morphological properties (see Figure <a href="#Ch4.F2">4.2</a>).
+There are three traditional approaches to this: avoiding inflection altogether, rule-based methods, and dictionary-based methods.
+Avoiding inflection often leads to unnatural results, rules have scalability issues, and dictionary-based methods cannot generalize to previously unseen word forms.
+Our solution, dubbed <em>Flect</em>, manages to produce natural inflection and is easily trainable for different languages and capable of generalizing to unseen inputs.</p>
+</div>
+<div id="Ch4.S2.p2">
+<p>Similarly to <cite>Bohnet et al. (<a href="#bib.bib21">2010</a>)</cite> and <cite>Durrett and DeNero (<a href="#bib.bib205">2013</a>)</cite>, we reformulate the task of finding the correct word form as a multiclass classification problem. Instead of finding the desired word form directly (which would induce an explosion of possible target classes), the classifier is trained to find the correct inflection pattern: <em>lemma-form edit scripts</em> – rules describing how to transform the base form into the inflected form – are used as target classes.</p>
+</div>
+<div id="Ch4.S2.p3">
+<p>We used the LIBLINEAR logistic regression classifier <cite>(Fan et al., <a href="#bib.bib40">2008</a>)</cite> with the following main feature types: lemma, part-of-speech tag, other morphological features, and lemma suffixes of up to 4 characters. The last feature type allows the classifier to generalize to unknown lemmas since inflection depends mostly on suffixes in many languages.</p>
+</div>
+<figure id="Ch4.T1">
+<table>
+<thead>
+<tr>
+<th>Accuracy (%)</th>
+<th>English</th>
+<th>Czech</th>
+<th>German</th>
+<th>Spanish</th>
+<th>Catalan</th>
+<th>Japanese</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>Baseline</th>
+<td>98.94</td>
+<td>92.88</td>
+<td></td>
+<td></td>
+<td></td>
+<td></td>
+</tr>
+<tr>
+<th>Flect</th>
+<td>99.56</td>
+<td>99.45</td>
+<td>96.46</td>
+<td>99.01</td>
+<td>98.72</td>
+<td>99.94</td>
+</tr>
+</tbody>
+</table>
+<figcaption>Table 4.1: Morphology generation results on CoNLL 2009 datasets.</figcaption>
+<p>The table shows a percentage of correctly predicted inflected word forms. <em>Baseline</em> is a simple dictionary learned from the same data, where unknown words are left uninflected.</p>
+</figure>
+<div id="Ch4.S2.p4">
+<p>We evaluated our Flect morphology generator on six languages using the CoNLL 2009 Shared Task data sets <cite>(Hajič et al., <a href="#bib.bib32">2009</a>)</cite>, and compared it to a simple dictionary baseline for English and Czech (see Table <a href="#Ch4.T1">4.1</a>). We can see that Flect is able to predict the majority of word forms correctly and significantly improves over a dictionary baseline by generalizing to word forms unseen in the training set. The lower score for German is caused partly by insufficient information in the morphological tags.</p>
+</div>
+<div id="Ch4.S2.p5">
+<p>We also integrated Flect into our English surface realizer, where it replaced a handcrafted morphological dictionary <cite>(Straková et al., <a href="#bib.bib98">2014</a>)</cite>, gaining over 3.5% BLEU improvement in the round trip test described in Section <a href="#Ch4.S1">4.1</a>.</p>
+</div>
+</section>
+</section>
+<section id="Ch5">
+<h2>
+5&nbsp;&nbsp; Perceptron-based Sentence Planning</h2>
+
+<div id="Ch5.p1">
+<p>In this chapter,
+we present our first experiments with a novel, fully trainable approach to sentence planning based on A*-search and perceptron ranking.
+This approach has since been superseded by a more flexible and better-performing NN-based generator (see Chapter <a href="#Ch6">6</a>), but it advanced the state-of-the art as the first approach where fine-grained semantic alignments were not required for training (see Section <a href="#Ch3.S2">3.2</a>) – our sentence planner includes alignment learning directly into the training process.
+In addition, unlike most previous approaches to trainable sentence planning <cite>(e.g., Walker et al., <a href="#bib.bib81">2001</a>; Stent et al., <a href="#bib.bib69">2004</a>)</cite>, our system does not require a handcrafted base module.</p>
+</div>
+<figure id="Ch5.F1"><img src="figs/x5.png" id="Ch5.F1.g1"  width="676" height="173" alt="">
+<figcaption>Figure 5.1: Overall structure of our generator.</figcaption>
+</figure>
+<div id="Ch5.p2">
+<p>The overall schema of the whole generation procedure is depicted in Figure <a href="#Ch5.F1">5.1</a>.
+First, the sentence planner, which is described in this chapter, generates t-tree sentence plans from the input DAs (see Section <a href="#Ch3.S4">3.4</a>). We then apply the surface realizer described in Chapter <a href="#Ch4">4</a> to convert the sentence plans to plain text sentences.</p>
+</div>
+<section id="Ch5.S1">
+<h3>
+5.1 Sentence Planner Architecture</h3>
+
+<div id="Ch5.S1.p1">
+<p>The sentence planner is based on a variant of the A* algorithm <cite>(Hart et al., <a href="#bib.bib95">1968</a>; Och et al., <a href="#bib.bib80">2001</a>; Koehn et al., <a href="#bib.bib71">2003</a>)</cite>. It starts from an empty sentence plan tree and tries to find a path to the complete, optimal sentence plan by iteratively adding nodes to the currently “most promising” incomplete sentence plan. It uses the following two subcomponents to guide the search:</p>
+<ul id="Ch5.I1">
+<li id="Ch5.I1.i1">
+<div id="Ch5.I1.i1.p1">
+<p>a <em>candidate generator</em> that incrementally generates new candidate sentence plan trees (expanding incomplete sentence plans by adding new nodes),</p>
+</div>
+</li>
+<li id="Ch5.I1.i2">
+<div id="Ch5.I1.i2.p1">
+<p>a <em>scorer/ranker</em> that scores the appropriateness of the sentence plan trees for the input DA and selects the next sentence plan tree to be expanded.</p>
+</div>
+</li>
+</ul>
+<p>At each step, expansions of the currently best-ranking sentence plan tree are created by adding one node of all viable types and in all viable positions. The expansions are subsequently ranked. The algorithm continues as long as the best-ranking candidate sentence plan score keeps increasing.</p>
+</div>
+<div id="Ch5.S1.p2">
+<p>The basic scorer for the sentence plan tree candidates is based on the linear perceptron ranker of <cite>Collins and Duffy (<a href="#bib.bib76">2002</a>)</cite>, where the score is computed as a dot product of the features and the corresponding weight vector. Features include the candidate tree shape, nodes and their combinations, as well as conjunctions with items of the input DA. During training, weight vector update is performed if the score of the top-ranking generated tree for a given DA is higher than that of the corresponding the gold-standard tree.</p>
+</div>
+<div id="Ch5.S1.p3">
+<p>The basic scorer is trained to score full sentence plan trees, but it is also used to score incomplete sentence plans during the decoding, which leads to a bias towards bigger trees.
+To outweigh this bias, we introduced a novel modification of the perceptron updates to improve scoring of incomplete sentence plans: In addition to updating the weights using the full top-scoring candidate and the gold-standard tree, we also use their <em>differing subtrees</em> for extra perceptron updates.</p>
+</div>
+<div id="Ch5.S1.p4">
+<p>Moreover, to further boost scores of incomplete sentence plans that are expected to further grow, we add a <em>future promise</em> term to the sentence plan scores, based on the expected number of children of different node types (with different lemma-formeme combinations).</p>
+</div>
+</section>
+<section id="Ch5.S2">
+<h3>
+5.2 Experiments</h3>
+
+<figure id="Ch5.T1">
+<table>
+<thead>
+<tr>
+<th>Setup</th>
+<th>BLEU</th>
+<th>NIST</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>Basic perceptron updates</th>
+<td>54.24</td>
+<td>4.643</td>
+</tr>
+<tr>
+<th>+ Differing subtree updates</th>
+<td>58.70</td>
+<td>4.876</td>
+</tr>
+<tr>
+<th>+ Future promise</th>
+<td>59.89</td>
+<td>5.231</td>
+</tr>
+</tbody>
+</table>
+<figcaption>Table 5.1: Automatic evaluation on the BAGEL data set</figcaption>
+<p><span  style="font-size:90%;">BLEU numbers are shown as percentages. Numbers are averaged over all 10 cross-validation folds.</p>
+</figure>
+<div id="Ch5.S2.p1">
+<p>We performed our experiments on the BAGEL data set <cite>(Mairesse et al., <a href="#bib.bib20">2010</a>)</cite> in the restaurant information domain.
+Note that while the data set contains fine-grained semantic alignment, we do not use it in our experiments.
+We use 10-fold cross-validation – same as <cite>Mairesse et al. (<a href="#bib.bib20">2010</a>)</cite> – and evaluate our generator using the automatic BLEU and NIST scores <cite>(Papineni et al., <a href="#bib.bib78">2002</a>; Doddington, <a href="#bib.bib79">2002</a>)</cite>. The results are shown in Table <a href="#Ch5.T1">5.1</a>.</p>
+</div>
+<div id="Ch5.S2.p2">
+<p>Our generator did not achieve the same performance as that of <cite>Mairesse et al. (<a href="#bib.bib20">2010</a>)</cite> (ca. 67% BLEU). However, our task is substantially harder since the generator also needs to learn the alignment of words and phrases to DA items and determine whether all required information is present on the output (see Section <a href="#Ch3.S2">3.2</a>).
+Our differing tree updates clearly bring a substantial improvement over standard perceptron updates; using future promise estimation boosts the scores even further. Both improvements on the full training set are considered statistically significant at 95% confidence level by the paired bootstrap resampling test <cite>(Koehn, <a href="#bib.bib68">2004</a>)</cite>.</p>
+</div>
+<div id="Ch5.S2.p3">
+<p>The generator learns to produce meaningful utterances which mostly correspond well to the input DA. It is able to produce original paraphrases and generalizes to previously unseen DAs.
+On the other hand, the outputs are not free of semantic errors (missing, repeated, or irrelevant information).
+</p>
+</div>
+</section>
+</section>
+<section id="Ch6">
+<h2>
+6&nbsp;&nbsp; Sequence-to-Sequence Generation Experiments</h2>
+
+<div id="Ch6.p1">
+<p>With the recent emergence of models based on recurrent neural networks (RNNs) for various tasks in NLP, most notably sequence-to-sequence (seq2seq) models with attention for MT <cite>(Cho et al., <a href="#bib.bib105">2014</a>; Sutskever et al., <a href="#bib.bib104">2014</a>)</cite> and first RNN-based NLG approaches <cite>(Wen et al., <a href="#bib.bib100">2015b</a>, <a href="#bib.bib99">a</a>)</cite>, we understood the power of this approach and decided to adapt seq2seq generation to our task.
+Our new generator uses the seq2seq generation technique
+combined with beam search and an <math id="Ch6.p1.m1"  alttext="n" display="inline"><mi>n</mi></math>-best list reranker to suppress irrelevant information in the outputs.
+The new model is more flexible than most previous solutions including the A*-search-based generator presented in Chapter <a href="#Ch5">5</a> as it requires neither fine-grained alignments between DA items and words/phrases in training data <cite>(Mairesse et al., <a href="#bib.bib20">2010</a>)</cite>, nor a handcrafted base generator <cite>(Stent et al., <a href="#bib.bib69">2004</a>)</cite>, nor handcrafted features (as our A*-search-based generator).
+In addition, it yields significantly better results than our previous generator.</p>
+</div>
+<div id="Ch6.p2">
+<p>We improve upon previous RNN-based generators <cite>(Wen et al., <a href="#bib.bib100">2015b</a>, <a href="#bib.bib99">a</a>; Mei et al., <a href="#bib.bib116">2016</a>)</cite> in two ways:
+First, we are able compare two-step generation (sentence planning and surface realization) with a joint, one-step approach in a single architecture (cf. Section <a href="#Ch3.S4">3.4</a>): our seq2seq generator either generates t-trees, which are subsequently processed by the surface realizer described in Chapter <a href="#Ch4">4</a>, or it produces natural language strings directly.
+Second, we show that our system can be trained successfully using much less training data than previous RNN-based approaches.</p>
+</div>
+<section id="Ch6.S1">
+<h3>
+6.1 The Seq2seq Generation Model</h3>
+
+<figure id="Ch6.F1"><img src="figs/x6.png" id="Ch6.F1.g1"  width="676" height="125" alt="">
+<figcaption>Figure 6.1: The main seq2seq generator with attention.</figcaption>
+<p><span  style="font-size:90%;">Left part: encoder, with encoder hidden outputs concatenated to use for the attention model. Right part: decoder; dotted lines indicate data flow in the attention model.</p>
+</figure>
+<figure id="Ch6.F2"><img src="figs/x7.png" id="Ch6.F2.g1"  width="377" height="200" alt="">
+<figcaption>Figure 6.2: The <math id="Ch6.F2.m2"  alttext="n" display="inline"><mi>n</mi></math>-best list reranker for system outputs: DA classification (RNN + sigmoid binary classification layer) and comparison with the source DA.</figcaption>
+</figure>
+<div id="Ch6.S1.p1">
+<p>Our generator is based on the seq2seq model with attention <cite>(Bahdanau et al., <a href="#bib.bib109">2015</a>)</cite>, a type of an encoder-decoder RNN architecture operating on variable-length sequences of tokens (see Figure <a href="#Ch6.F1">6.1</a>).
+First, its encoder RNN consumes the input token by token and encodes it into a sequence of hidden states (vectors of floating-point numbers).
+The decoder then generates output tokens one-by-one, using as inputs its own internal state (initialized by the last encoder hidden state and updated in every step), the previously decoded token, and the attention context vector (a weighted sum of all encoder hidden states).</p>
+</div>
+<div id="Ch6.S1.p2">
+<p>DAs, t-trees, and sentences are represented as sequences of tokens to enable their usage in the sequence-based generator –
+DAs are encoded as lists of triples “DA type – slot – value”, t-trees use a simple bracketed notation.
+All tokens in turn are represented by their embeddings – vectors of floating-point numbers initialized randomly and trained from data <cite>(Bengio et al., <a href="#bib.bib115">2003</a>)</cite>.</p>
+</div>
+<div id="Ch6.S1.p3">
+<p>On top of this basic seq2seq architecture, we use beam search for decoding
+<cite>(Sutskever et al., <a href="#bib.bib104">2014</a>; Bahdanau et al., <a href="#bib.bib109">2015</a>)</cite> and a reranker that penalizes outputs which miss some information from the input DA or add irrelevant information.
+The reranker uses a RNN encoder over the outputs and a final sigmoid layer which provides a binary decision on the presence of different DA items (DA types, slot-value pairs).
+This is compared to the items in the input DA and the number of discrepancies for a particular output is used to lower its probability on the output <math id="Ch6.S1.p3.m1"  alttext="n" display="inline"><mi>n</mi></math>-best list (see Figure <a href="#Ch6.F2">6.2</a>).</p>
+</div>
+</section>
+<section id="Ch6.S2">
+<h3>
+6.2 Experiments</h3>
+
+<div id="Ch6.S2.p1">
+<p>Same as in Chapter <a href="#Ch5">5</a>, we perform our experiments on the
+BAGEL data set <cite>(Mairesse et al., <a href="#bib.bib20">2010</a>)</cite>, without using the fine-grained semantic alignments.</p>
+</div>
+<figure id="Ch6.T1">
+<table>
+<tbody>
+<tr>
+<td>Setup</td>
+<td>BLEU</td>
+<td>NIST</td>
+<td>SemErr</td>
+</tr>
+<tr>
+<td>
+<cite>Mairesse et al. (<a href="#bib.bib20">2010</a>)</cite> <span  style="font-size:90%;">with fine-grained alignments
+</td>
+<td>
+<math id="Ch6.T1.m1"  alttext="\sim" display="inline"><mo>∼</mo></math>67</td>
+<td>-</td>
+<td>
+<span style="visibility:hidden">00</td>
+</tr>
+<tr>
+<td>Best A*-search-based result (Chapter <a href="#Ch5">5</a>)</td>
+<td>59.89</td>
+<td>5.231</td>
+<td>30</td>
+</tr>
+<tr>
+<td>Greedy generation in a 2-step setup with t-trees</td>
+<td>55.29</td>
+<td>5.144</td>
+<td>20</td>
+</tr>
+<tr>
+<td> + Beam search</td>
+<td>58.59</td>
+<td>5.293</td>
+<td>28</td>
+</tr>
+<tr>
+<td> + Reranker</td>
+<td>60.44</td>
+<td>5.514</td>
+<td>19</td>
+</tr>
+<tr>
+<td>Greedy direct generation of strings</td>
+<td>52.54</td>
+<td>5.052</td>
+<td>37</td>
+</tr>
+<tr>
+<td> + Beam search</td>
+<td>55.84</td>
+<td>5.228</td>
+<td>32</td>
+</tr>
+<tr>
+<td> + Reranker</td>
+<td>62.76</td>
+<td>5.669</td>
+<td>19</td>
+</tr>
+</tbody>
+</table>
+<figcaption>Table 6.1: Results of our seq2seq generator on the BAGEL data set.</figcaption>
+<p><span  style="font-size:90%;">NIST, BLEU, and semantic errors in a sample of the output. Beam size is set to 100.</p>
+</figure>
+<div id="Ch6.S2.p2">
+<p>The results of our experiments are shown in Table <a href="#Ch6.T1">6.1</a>.
+We include BLEU and NIST scores and the number of semantic errors (missing, added, or repeated information) counted manually on a sample of the outputs.
+A manual inspection of the outputs shows that both tree-based and joint setup are able to produce fluent sentences in the domain style for the most part.
+The occasional errors are of different types in the two setups: while the joint setup confuses semantically close items such as <em>Italian</em> and <em>French</em> cuisine, the syntax-generating model produces outputs with missing or repeated information more often.</p>
+</div>
+<div id="Ch6.S2.p3">
+<p>A comparison of the two approaches goes in favor of the joint setup, which offers better performance and does not need an external surface realizer.
+Both setups surpass the previous best results achieved in Chapter <a href="#Ch5">5</a>.<sup>1</sup><sup>1</sup>The BLEU/NIST differences are statistically significant according to the pairwise bootstrap resampling test <cite>(Koehn, <a href="#bib.bib68">2004</a>)</cite>.</p>
+</div>
+<div id="Ch6.S2.p4">
+<p>We also trained our system on the larger restaurant dataset of <cite>Wen et al. (<a href="#bib.bib99">2015a</a>)</cite> to perform a direct comparison of our system’s performance to theirs. Our system performed comparably, offering slightly lower BLEU score (72.7% vs. 73.1%) but slightly lower number of semantic errors (slot error rate of 0.41% vs. 0.46%).</p>
+</div>
+</section>
+</section>
+<section id="Ch7">
+<h2>
+7&nbsp;&nbsp; Generating User-adaptive Outputs</h2>
+
+<div id="Ch7.p1">
+<p>In a conversation, speakers are influenced by previous utterances and
+tend to adapt their way of speaking to each other,
+reusing lexical items as well as syntactic structure
+<cite>(Reitter et al., <a href="#bib.bib226">2006</a>)</cite>.
+This phenomenon
+is referred to as <em>entrainment</em> or <em>dialogue alignment</em>.
+It occurs naturally and subconsciously, facilitates successful conversations <cite>(Friedberg et al., <a href="#bib.bib220">2012</a>)</cite>,
+and forms a natural source of variation in dialogues.
+There have been several attempts to let SDSs entrain to user utterances <cite>(Hu et al., <a href="#bib.bib223">2014</a>; Lopes et al., <a href="#bib.bib3">2013</a>, <a href="#bib.bib102">2015</a>)</cite>, but all of them are completely or partially rule-based.</p>
+</div>
+<div id="Ch7.p2">
+<p>In this chapter,
+we enable our seq2seq system from Chapter <a href="#Ch6">6</a> to align to the user, thus providing contextually appropriate, more natural, and possibly more successful output.
+The resulting system is, to our knowledge, the first fully trainable NLG system to support adapting to users’ utterances.
+It improves upon a context-oblivious baseline in terms of both automatic metrics and human judgments.</p>
+</div>
+<section id="Ch7.S1">
+<h3>
+7.1 Collecting a Context-Aware NLG Dataset</h3>
+
+<figure id="Ch7.F1">
+<table>
+<tr>
+<td><span  style="font-size:90%;color:#333399;">inform(</td>
+<td><span  style="font-size:90%;color:#333399;">line=M102, direction=“Herald Square”, vehicle=bus,</td>
+</tr>
+<tr>
+<td><span  style="font-size:90%;">.</td>
+<td><span  style="font-size:90%;color:#333399;">departure_time=9:01am, from_stop=“Wall Street”)</td>
+</tr>
+</table>
+<table>
+<tr>
+<td><span  style="font-size:90%;">Take bus line M102 from Wall Street to Herald Square at 9:01am.</td>
+</tr>
+</table>
+<table>
+<tr>
+<td><span  style="font-size:90%;color:#BF8040;">is there another option</td>
+</tr>
+</table>
+<table>
+<tr>
+<td><span  style="font-size:90%;color:#333399;">inform(</td>
+<td><span  style="font-size:90%;color:#333399;">line=M102, direction=“Herald Square”, vehicle=bus,</td>
+</tr>
+<tr>
+<td><span  style="font-size:90%;">.</td>
+<td><span  style="font-size:90%;color:#333399;">departure_time=9:01am, from_stop=“Wall Street”)</td>
+</tr>
+</table>
+<table>
+<tr>
+<td>
+<span  style="font-size:90%;color:#BF0040;">There is<span  style="font-size:90%;"> a bus at 9:01am from Wall Street to Herald Square using line M102.
+</td>
+</tr>
+</table>
+<figcaption  style="font-size:90%;">Figure 7.1: A comparison of an ordinary NLG training instance (top) and a context-aware one (bottom).</figcaption>
+<p><span  style="font-size:90%;">The context-aware instance includes the preceding user utterance (context), the input DA, and a context-appropriate output sentence (with entrainment highlighted).</p>
+</figure>
+<div id="Ch7.S1.p1">
+<p>We
+collected a new NLG dataset for SDSs that is, to our knowledge, the first dataset of its kind to include preceding context (user utterance) with each data instance (see Figure <a href="#Ch7.F1">7.1</a>).<sup>2</sup><sup>2</sup>To prevent data sparsity issues, we only take into account the immediately preceding user utterance, which we believe has the largest entrainment potential.
+Crowdsourcing was used to obtain both the contextual user utterances and the corresponding system responses to be generated.
+The dataset contains over 5,500 instances with more than 500 distinct context utterances from the domain of public transport information.
+It is released under a permissive Creative Commons 4.0 BY-SA license.<sup>3</sup><sup>3</sup>Archival version is available at <a href="http://hdl.handle.net/11234/1-1675">http://hdl.handle.net/11234/1-1675</a>, development version at <a href="https://github.com/UFAL-DSG/alex_context_nlg_dataset">https://github.com/UFAL-DSG/alex_context_nlg_dataset</a>.</p>
+</div>
+<figure id="Ch7.F2"><img src="figs/x8.png" id="Ch7.F2.g1"  width="676" height="257" alt="">
+<figcaption>Figure 7.2: Context-aware modifications to the main seq2seq generator.</figcaption>
+<p><span  style="font-size:90%;">The base seq2seq model is shown in black, with (a) prepending context highlighted in gold, and (b) context encoder in teal. Note that (a) and (b) are alternatives, they are not used together.</p>
+</figure>
+</section>
+<section id="Ch7.S2">
+<h3>
+7.2 Context-aware Seq2seq Generator Extensions</h3>
+
+<div id="Ch7.S2.p1">
+<p>To allow our seq2seq system from Chapter <a href="#Ch6">6</a> to entrain to the user and provide naturally variable outputs,
+we enhanced its architecture in two alternative ways, which condition generation not only on the input DA, but also on the preceding user utterance:</p>
+<ol id="Ch7.I1">
+<li id="Ch7.I1.i1">
+<div id="Ch7.I1.i1.p1">
+<p><em>Prepending context.</em> The tokens of the preceding user utterance are simply prepended to the DA tokens and fed into the encoder (see Figure <a href="#Ch7.F2">7.2</a>).</p>
+</div>
+</li>
+<li id="Ch7.I1.i2">
+<div id="Ch7.I1.i2.p1">
+<p><em>Context encoder.</em> We add another, separate encoder for the context utterances. The hidden states of both encoders are concatenated (see Figure <a href="#Ch7.F2">7.2</a>).</p>
+</div>
+</li>
+</ol>
+<p>Furthermore, we add an <em><math id="Ch7.S2.p1.m1"  alttext="n" display="inline"><mi>n</mi></math>-gram match reranker</em> promoting generator outputs on the <math id="Ch7.S2.p1.m2"  alttext="k" display="inline"><mi>k</mi></math>-best list that have a word or phrase overlap with the context utterance.</p>
+</div>
+</section>
+<section id="Ch7.S3">
+<h3>
+7.3 Experiments</h3>
+
+<figure id="Ch7.T1">
+<table>
+<thead>
+<tr>
+<th>Setup</th>
+<th>BLEU</th>
+<th>NIST</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<th>Baseline (context not used)</th>
+<td>66.41</td>
+<td>7.037</td>
+</tr>
+<tr>
+<th>
+<math id="Ch7.T1.m1"  alttext="n" display="inline"><mi>n</mi></math>-gram match reranker</th>
+<td>68.68</td>
+<td>7.577</td>
+</tr>
+<tr>
+<th>Prepending context</th>
+<td>63.87</td>
+<td>6.456</td>
+</tr>
+<tr>
+<th> + <math id="Ch7.T1.m2"  alttext="n" display="inline"><mi>n</mi></math>-gram match reranker</th>
+<td>69.26</td>
+<td>7.772</td>
+</tr>
+<tr>
+<th>Context encoder</th>
+<td>63.08</td>
+<td>6.818</td>
+</tr>
+<tr>
+<th> + <math id="Ch7.T1.m3"  alttext="n" display="inline"><mi>n</mi></math>-gram match reranker</th>
+<td>69.17</td>
+<td>7.596</td>
+</tr>
+</tbody>
+</table>
+<figcaption>Table 7.1: BLEU and NIST scores of different generator setups on the test data.</figcaption>
+</figure>
+<div id="Ch7.S3.p1">
+<p>We use our collected dataset to evaluate the generator extensions described in Section <a href="#Ch7.S2">7.2</a>, applying direct string generation only.
+Table <a href="#Ch7.T1">7.1</a> lists our results in terms of the BLEU and NIST metrics.
+We can see that the <math id="Ch7.S3.p1.m1"  alttext="n" display="inline"><mi>n</mi></math>-gram match reranker brings an improvement even if used alone.
+Both seq2seq model extensions result in lowered scores if used by themselves, but bring in even larger improvements in combination with the <math id="Ch7.S3.p1.m2"  alttext="n" display="inline"><mi>n</mi></math>-gram match reranker.</p>
+</div>
+<div id="Ch7.S3.p2">
+<p>We evaluated the best-performing setting (prepending context with <math id="Ch7.S3.p2.m1"  alttext="n" display="inline"><mi>n</mi></math>-gram match reranker) in a blind pairwise preference test against the baseline (cf. Section <a href="#Ch3.S5">3.5</a>) with untrained judges recruited on the CrowdFlower crowdsourcing platform.
+The judges preferred the context-aware system output in 52.5% cases, slightly but significantly more often than the baseline.<sup>4</sup><sup>4</sup>Differences have been confirmed at 99% statistical significance level by pairwise bootstrap resampling <cite>(Koehn, <a href="#bib.bib68">2004</a>)</cite> for both BLEU/NIST scores and human judgments.</p>
+</div>
+</section>
+</section>
+<section id="Ch8">
+<h2>
+8&nbsp;&nbsp; Generating Czech</h2>
+
+<figure id="Ch8.F1">
+<p><span  style="font-size:90%;color:#333399;">inform(name=“Café Savoy”, food=Mexican)<span  style="color:black;">
+\gllCafé Savoy nabízí mexická jídla.
+Café Savoy\textsubscriptnominative offers Mexican foods.
+\gln\glend</p>
+<p><span  style="font-size:90%;color:#333399;">inform(name=“Café Savoy”, price_range=moderate)<span  style="color:black;">
+\gllKavárna Savoy je hezká restaurace se středními cenami.
+Café Savoy\textsubscriptnominative is a nice restaurant with moderate prices.
+\gln\glend</p>
+<p><span  style="font-size:90%;color:#333399;">inform(name=“Café Savoy”, phone=293808716)<span  style="color:black;">
+\gllTelefonní číslo do Kavárny Savoy je 293270464
+The phone number to Café Savoy\textsubscriptgenitive is 293270464
+\gln\glend</p>
+<figcaption>Figure 8.1: Examples from our dataset showing three different surface forms for the DA slot value “Café Savoy” (with two synonymous lemmas, “café” and “kavárna”).</figcaption>
+</figure>
+<figure id="Ch8.F2"><img src="figs/x9.png" id="Ch8.F2.g1"  width="676" height="131" alt="">
+<figcaption>Figure 8.2: Lemma-tag generation: the seq2seq model produces lemmas and morphological tags, which are realized as word forms by a morphological dictionary.</figcaption>
+</figure>
+<div id="Ch8.p1">
+<p>Since NLG systems are typically tested on English, they can exploit its grammar. For instance, many generators are trained on delexicalized data and assume that lexical values can be inserted verbatim into the outputs (see Section <a href="#Ch3.S3">3.3</a>). However, this does not not hold for languages where noun inflection is required, such as Czech.</p>
+</div>
+<div id="Ch8.p2">
+<p>Unlike most previous works, we test the multilingual capabilities of our generator in an experimental setting:
+In this chapter, we apply our seq2seq NLG system to Czech, introduce a few improvements, and show that our method produces mostly fluent and relevant outputs.</p>
+</div>
+<section id="Ch8.S1">
+<h3>
+8.1 Creating an NLG Dataset for Czech</h3>
+
+<div id="Ch8.S1.p1">
+<p>Since no suitable dataset existed for Czech NLG (same as most other non-English languages), we needed to create a new one.
+To reduce costs, speed up the process, and work around the lack of Czech speakers on crowdsourcing platforms <cite>(Pavlick et al., <a href="#bib.bib254">2014</a>)</cite>, we localized an existing English set – <cite>Wen et al. (<a href="#bib.bib99">2015a</a>)</cite>’s 5,000 instances on restaurant information – and had it translated by freelance translators.
+We released the data under the Creative Commons 4.0 BY-SA license.<sup>5</sup><sup>5</sup>The set can be downloaded from <a href="http://hdl.handle.net/11234/1-2123">http://hdl.handle.net/11234/1-2123</a>, a development version is available at <a href="https://github.com/UFAL-DSG/cs_restaurant_dataset">https://github.com/UFAL-DSG/cs_restaurant_dataset</a>.
+The result shows that DA slot values, such as restaurant names, have more possible lexical realizations and need to be inflected (see Figure <a href="#Ch8.F1">8.1</a>).</p>
+</div>
+</section>
+<section id="Ch8.S2">
+<h3>
+8.2 Generator Extensions</h3>
+
+<div id="Ch8.S2.p1">
+<p>We use the seq2seq approach described in Chapter <a href="#Ch6">6</a> as the base of our experiments and add the following extensions to better accommodate for Czech:</p>
+</div>
+<section id="Ch8.S2.SS0.SSS0.Px1">
+<h4>Input DA handling.</h4>
+
+<div id="Ch8.S2.SS0.SSS0.Px1.p1">
+<p>As DA slot values may influence output shape (e.g., require a specific preposition), we experiment with <em>lexically-informed</em> generation <cite>(Sharma et al., <a href="#bib.bib163">2016</a>)</cite>: the input DA is lexicalized and values are taken into account during generation, but the output still contains placeholders and lexicalization is performed separately (to avoid data sparsity problems).</p>
+</div>
+</section>
+<section id="Ch8.S2.SS0.SSS0.Px2">
+<h4>Lemma-tag generation.</h4>
+
+<div id="Ch8.S2.SS0.SSS0.Px2.p1">
+<p>This is a third generator mode in addition to the two-step approach with t-trees and a joint end-to-end setup.
+The seq2seq model generates an interleaved sequence of lemmas (base word forms) and morphological tags (see Figure <a href="#Ch8.F2">8.2</a>), and the MorphoDiTa morphological dictionary <cite>(Straková et al., <a href="#bib.bib98">2014</a>)</cite> maps them to inflected word forms.
+This should reduce data sparsity by abstracting away from word inflection while still allowing the seq2seq model to have nearly full control of the output.</p>
+</div>
+</section>
+<section id="Ch8.S2.SS0.SSS0.Px3">
+<h4>Lexicalization.</h4>
+
+<div id="Ch8.S2.SS0.SSS0.Px3.p1">
+<p>We implement four different approaches to selecting one of the multiple possible surface forms for a DA slot value (see Figure <a href="#Ch8.F1">8.1</a>): a random baseline, a baseline selecting the most frequent surface form, an <math id="Ch8.S2.SS0.SSS0.Px3.p1.m1"  alttext="n" display="inline"><mi>n</mi></math>-gram language model (LM), and a RNN-based LM. Both language models estimate the probability of possible surface forms based on preceding tokens in the sentence.</p>
+</div>
+</section>
+</section>
+<section id="Ch8.S3">
+<h3>
+8.3 Experiments</h3>
+
+<figure id="Ch8.T1">
+<table>
+<tbody>
+<tr>
+<th  colspan="3">Setup</th>
+<th  rowspan="2">BLEU</th>
+<th  rowspan="2">NIST</th>
+</tr>
+<tr>
+<th>input DAs</th>
+<th>generator mode</th>
+<th>lexicalization</th>
+</tr>
+<tr>
+<td>delexicalized</td>
+<td>joint (direct to strings)</td>
+<td>RNN LM</td>
+<td>19.54</td>
+<td>4.273</td>
+</tr>
+<tr>
+<td>delexicalized</td>
+<td>lemma-tag</td>
+<td>RNN LM</td>
+<td>18.51</td>
+<td>4.162</td>
+</tr>
+<tr>
+<td>lexically informed</td>
+<td>joint (direct to strings)</td>
+<td>RNN LM</td>
+<td>17.93</td>
+<td>4.094</td>
+</tr>
+<tr>
+<td>lexically informed</td>
+<td>lemma-tag</td>
+<td>most frequent</td>
+<td>20.86</td>
+<td>4.427</td>
+</tr>
+<tr>
+<td>lexically informed</td>
+<td>lemma-tag</td>
+<td>
+<math id="Ch8.T1.m1"  alttext="n" display="inline"><mi>n</mi></math>-gram LM</td>
+<td>20.54</td>
+<td>4.399</td>
+</tr>
+<tr>
+<td>lexically informed</td>
+<td>lemma-tag</td>
+<td>RNN LM</td>
+<td>21.18</td>
+<td>4.448</td>
+</tr>
+<tr>
+<td>lexically informed</td>
+<td>two-step with t-trees</td>
+<td>RNN LM</td>
+<td>17.62</td>
+<td>4.112</td>
+</tr>
+</tbody>
+</table>
+<figcaption>Table 8.1: Performance of selected generator setups in terms BLEU and NIST.</figcaption>
+</figure>
+<figure id="Ch8.T2">
+<table>
+<tbody>
+<tr>
+<td  colspan="3">Setup</td>
+<td>True</td>
+<td  rowspan="2">Rank</td>
+</tr>
+<tr>
+<td>input DAs</td>
+<td>generator mode</td>
+<td>lexicalization</td>
+<td>Skill</td>
+</tr>
+<tr>
+<td>delexicalized</td>
+<td>joint (direct to strings)</td>
+<td>RNN LM</td>
+<td>0.511</td>
+<td>1</td>
+</tr>
+<tr>
+<td>
+delexicalized</td>
+<td>lemma-tag</td>
+<td>RNN LM</td>
+<td>0.479</td>
+<td>2-4</td>
+</tr>
+<tr>
+<td>lexically informed</td>
+<td>lemma-tag</td>
+<td>RNN LM</td>
+<td>0.464</td>
+<td>2-4<span  style="width:0.0pt;">  <math id="Ch8.T2.m1"  alttext="*" display="inline"><mo>*</mo></math>
+</td>
+</tr>
+<tr>
+<td>lexically informed</td>
+<td>lemma-tag</td>
+<td>most frequent</td>
+<td>0.462</td>
+<td>2-4</td>
+</tr>
+<tr>
+<td>
+lexically informed</td>
+<td>joint (direct to strings)</td>
+<td>RNN LM</td>
+<td>0.413</td>
+<td>5</td>
+</tr>
+<tr>
+<td>
+lexically informed</td>
+<td>two-step with t-trees</td>
+<td>RNN LM</td>
+<td>0.343</td>
+<td>6-7</td>
+</tr>
+<tr>
+<td>lexically informed</td>
+<td>lemma-tag</td>
+<td>
+<math id="Ch8.T2.m2"  alttext="n" display="inline"><mi>n</mi></math>-gram LM</td>
+<td>0.329</td>
+<td>6-7</td>
+</tr>
+</tbody>
+</table>
+<figcaption>Table 8.2: Human rating results (best BLEU/NIST system marked with “*”).</figcaption>
+</figure>
+<div id="Ch8.S3.p1">
+<p>In our experiments on our restaurant datasets, all 24 system variants learned to produce mostly fluent outputs with little to no semantic errors.
+We could see based on BLEU/NIST that the lemma-tag and direct generation setups perform better than the tree-based setup and RNN LM outperforms other lexicalization methods.
+We selected 7 setups for human evaluation (see Table <a href="#Ch8.T1">8.1</a>): the best-performing lexically-informed and delexicalized setups, plus selected contrastive setups with just one setting different from the overall best setup (lexically-informed lemma-tag generation with RNN LM lexicalization).</p>
+</div>
+<div id="Ch8.S3.p2">
+<p>The human evaluation is based on subjective preference ranking, same as in Chapter <a href="#Ch7">7</a>.
+We used a multi-way ranking of system outputs <cite>(Bojar et al., <a href="#bib.bib252">2016</a>)</cite>,
+which is converted to pairwise system comparisons and evaluated using the TrueSkill algorithm <cite>(Sakaguchi et al., <a href="#bib.bib257">2014</a>)</cite>.</p>
+</div>
+<div id="Ch8.S3.p3">
+<p>Since users preferred a different system (delexicalized joint generation with RNN LM) than the best one in terms of BLEU/NIST, we performed a small-scale expert comparison of both systems’ performance, which showed that both setups perform very comparably, but the human-preferred system fares slightly better.
+The results thus come out rather in favor of the simplest generator setups.
+On the other hand, the RNN-based surface form selection clearly pays off.
+</p>
+</div>
+</section>
+</section>
+<section id="Ch9">
+<h2>
+9&nbsp;&nbsp; Conclusions</h2>
+
+<div id="Ch9.p1">
+<p>The main contributions of our thesis addressing the individual objectives set in Chapter <a href="#Ch1">1</a> are as follows:</p>
+</div>
+<section id="Ch9.S3.SS0.SSS0.Px1">
+<h4>
+<a href="#Ch1.S1">A</a>)  Generator easily adaptable for different domains.</h4>
+
+<div id="Ch9.S3.SS0.SSS0.Px1.p1">
+<p>In Chapter <a href="#Ch5">5</a>, we developed an A*-search-based NLG system that is trainable from pairs of natural language sentences and corresponding dialogue acts, without the need for fine-grained semantic alignments, thus greatly simplifying training data collection for NLG. It was the first NLG system to learn alignments jointly with sentence planning. This system has then been superseded by a new, seq2seq-based one in terms of both speed and output quality, as described in Chapter <a href="#Ch6">6</a>. The seq2seq-based system reached new state-of-the-art without fine-grained alignments on the small BAGEL dataset <cite>(Mairesse et al., <a href="#bib.bib20">2010</a>)</cite>, using much less training data than other RNN-based approaches. The two NLG systems were described in <cite>(Dušek and Jurčíček, <a href="#bib.bib101">2015</a>)</cite> and <cite>(Dušek and Jurčíček, <a href="#bib.bib216">2016c</a>)</cite>, respectively.</p>
+</div>
+</section>
+<section id="Ch9.S3.SS0.SSS0.Px2">
+<h4>
+<a href="#Ch1.S1">B</a>)  Generator easily adaptable to different languages.</h4>
+
+<div id="Ch9.S3.SS0.SSS0.Px2.p1">
+<p>We developed a simple, domain-independent surface realizer from the t-trees deep syntax formalism (see Section <a href="#Ch3.S4">3.4</a>) for English, similar to an older Czech realizer <cite>(Žabokrtský et al., <a href="#bib.bib42">2008</a>)</cite>. We simplified the creation of new t-tree realizers by creating a novel statistical morphological inflection module which generalizes to previously unseen word forms (see Chapter <a href="#Ch4">4</a>). The English realizer was described in <cite>(Dušek et al., <a href="#bib.bib112">2015</a>)</cite>, and we reported on the morphological inflection module in <cite>(Dušek and Jurčíček, <a href="#bib.bib2">2013</a>)</cite>. Parts of the realizer were later reused in machine translation <cite>(Popel et al., <a href="#bib.bib195">2015</a>; Aranberri et al., <a href="#bib.bib212">2016</a>)</cite>.</p>
+</div>
+<div id="Ch9.S3.SS0.SSS0.Px2.p2">
+<p>In Chapter <a href="#Ch8">8</a>, we applied our seq2seq-based generator to Czech, addressing problems not present in English – larger vocabulary and the need to inflect proper names (DA slot values). We show that our seq2seq-based generator is able to produce mostly correct and fluent sentence structures without any significant changes, apart from proper name inflection, where our RNN-LM-based module significantly outperforms a strong baseline.</p>
+</div>
+</section>
+<section id="Ch9.S3.SS0.SSS0.Px3">
+<h4>
+<a href="#Ch1.S1">C</a>)  Generator that adapts to the user.</h4>
+
+<div id="Ch9.S3.SS0.SSS0.Px3.p1">
+<p>Mimicking human behavior in dialogue, where interlocutors adapt their wording and syntax to each other, we extended our seq2seq generator in Chapter <a href="#Ch7">7</a> to reflect not only the input DA, but also the previous user request, thus enabling it to create responses appropriate in the preceding dialogue context and providing it with a natural
+source of variation. The context-aware generator achieved a small but statistically significant performance improvement over the context-oblivious baseline.
+This result has been described in <cite>(Dušek and Jurčíček, <a href="#bib.bib224">2016b</a>)</cite>.</p>
+</div>
+</section>
+<section id="Ch9.S3.SS0.SSS0.Px4">
+<h4>
+<a href="#Ch1.S1">D</a>)  Comparing different NLG system architectures.</h4>
+
+<div id="Ch9.S3.SS0.SSS0.Px4.p1">
+<p>In Chapters <a href="#Ch6">6</a> and <a href="#Ch8">8</a>, we compare two different NLG architectures: a two-step pipeline using separate sentence planning and surface realization modules and a joint setup generating surface strings directly. We are able to use the same seq2seq model for both setups, generating t-trees (deep syntax postprocessed by a surface realizer) or surface word forms (in an end-to-end fashion).
+In Chapter <a href="#Ch8">8</a>, we experiment with seq2seq generation of Czech lemma-tag sequences (base word forms and morphological categories), which are subsequently postprocessed by a morphological dictionary.
+We show that the seq2seq models learn to generate valid t-trees and lemma-tag sequences successfully. However, the direct, end-to-end setup reaches superior performance in our domains.
+Experiments for English from Chapter <a href="#Ch6">6</a> were described in <cite>(Dušek and Jurčíček, <a href="#bib.bib216">2016c</a>)</cite>.</p>
+</div>
+</section>
+<section id="Ch9.S3.SS0.SSS0.Px5">
+<h4>
+<a href="#Ch1.S1">E</a>)  Dataset availability for NLG in SDSs.</h4>
+
+<div id="Ch9.S3.SS0.SSS0.Px5.p1">
+<p>To perform our experiments in Chapters <a href="#Ch7">7</a> and <a href="#Ch8">8</a>, we have created two novel datasets for NLG, which are freely available under a permissive license:<sup>6</sup><sup>6</sup>Available at <a href="https://github.com/UFAL-DSG/alex_context_nlg_dataset">https://github.com/UFAL-DSG/alex_context_nlg_dataset</a>, <a href="https://github.com/UFAL-DSG/cs_restaurant_dataset">https://github.com/UFAL-DSG/cs_restaurant_dataset</a> under the Creative Commons 4.0 BY-SA license. the first NLG dataset for Czech, which is also the biggest freely available non-English NLG dataset, and the first NLG dataset using preceding dialogue context and specifically targeted at adapting system responses to the user. The latter set is also described in <cite>(Dušek and Jurčíček, <a href="#bib.bib225">2016a</a>)</cite>.</p>
+</div>
+<div id="Ch9.S3.SS0.SSS0.Px5.p2">
+<br>
+<p>In sum, our work constitutes significant advances along all of the preset objectives.
+In a few aspects, it leaves room for improvement in future work as some of the experiments on dialogue alignment and Czech generation were rather limited. Nevertheless, our generator is fully functional and usable in practice, within a spoken dialogue system or in a standalone setting. It is freely available for download from GitHub.<sup>7</sup><sup>7</sup>Available at <a href="https://github.com/UFAL-DSG/tgen">https://github.com/UFAL-DSG/tgen</a> under the Apache 2.0 license.</p>
+</div>
+<div id="Ch9.S3.SS0.SSS0.Px5.p3">
+<p>In future work, we would like to widen the user adaptation experiment by taking the whole dialogue into account.
+We also plan to work on removing the need for delexicalizing proper names to further simplify portability of NLG systems to other domains and languages.
+In the long term, we see the future of NLG in interactive systems in end-to-end solutions incorporating language understanding, dialogue management, and response generation <cite>(Wen et al., <a href="#bib.bib166">2016</a>; Williams et al., <a href="#bib.bib271">2017</a>)</cite>.</p>
+</div>
+<div id="Ch9.S3.SS0.SSS0.Px5.p4">
+</div>
+</section>
+</section>
+<section id="bib">
+<h2>References</h2>
+
+<ul id="L1">
+<li id="bib.bib22">
+G. Angeli, P. Liang and D. Klein (2010)
+A simple domain-independent probabilistic approach to generation.
+
+In Proceedings of the 2010 Conference on Empirical Methods in Natural Language Processing,
+
+Cambridge, MA, USA,  pp. 502–512.
+
+Cited by: <a href="#Ch2.S1.p3">2.1</a>,
+<a href="#Ch2.S2.p2">2.2</a>.
+
+</li>
+<li id="bib.bib212">
+N. Aranberri, G. Labaka Intxauspe, O. Jauregi, A. Díaz de, I. Alegría Loinaz and E. Agirre Bengoa (2016)
+Tectogrammar-based machine translation for English-Spanish and English-Basque.
+
+Procesamiento del Lenguaje Natural 56,  pp. 73–80.
+
+Cited by: <a href="#Ch9.S3.SS0.SSS0.Px2.p1">Chapter 9</a>.
+
+</li>
+<li id="bib.bib109">
+D. Bahdanau, K. Cho and Y. Bengio (2015)
+Neural machine translation by jointly learning to align and translate.
+
+In International Conference on Learning Representations,
+
+San Diego, CA, USA.
+
+Note: arXiv:1409.0473
+
+Cited by: <a href="#Ch6.S1.p1">6.1</a>,
+<a href="#Ch6.S1.p3">6.1</a>.
+
+</li>
+<li id="bib.bib86">
+S. Bangalore and O. Rambow (2000)
+Exploiting a probabilistic hierarchical model for generation.
+
+In Proceedings of the 18th conference on Computational linguistics-Volume 1,
+
+SaarbrÃ¼cken, Germany,  pp. 42–48.
+
+Cited by: <a href="#Ch2.S2.p1">2.2</a>.
+
+</li>
+<li id="bib.bib61">
+A. Belz (2005)
+Statistical generation: three methods compared and evaluated.
+
+In Proceedings of the 10th European Workshop on Natural Language Generation (ENLGâ05),
+
+Helsinki, Finland,  pp. 15–23.
+
+Cited by: <a href="#Ch2.S2.p1">2.2</a>.
+
+</li>
+<li id="bib.bib115">
+Y. Bengio, R. Ducharme, P. Vincent and C. Jauvin (2003)
+A neural probabilistic language model.
+
+Journal of Machine Learning Research 3,  pp. 1137–1155.
+
+Cited by: <a href="#Ch6.S1.p2">6.1</a>.
+
+</li>
+<li id="bib.bib21">
+B. Bohnet, L. Wanner, S. Mille and A. Burga (2010)
+Broad coverage multilingual deep sentence generation with a stochastic multi-level realizer.
+
+In Proceedings of the 23rd International Conference on Computational Linguistics,
+
+Beijing, China,  pp. 98–106.
+
+Cited by: <a href="#Ch4.S2.p2">4.2</a>.
+
+</li>
+<li id="bib.bib252">
+O. Bojar, R. Chatterjee, C. Federmann, Graham, B. Haddow, M. Huck, A. J. Yepes, P. , V. Logacheva, C. Monz and others (2016)
+Findings of the 2016 conference on machine translation (WMT16).
+
+In Proceedings of the First Conference on Machine Translation (WMT), Volume 2: Shared Task Papers,
+
+Berlin, Germany,  pp. 131–198.
+
+Cited by: <a href="#Ch8.S3.p2">8.3</a>.
+
+</li>
+<li id="bib.bib259">
+C. Callison-Burch, C. Fordyce, P. Koehn, Monz and J. Schroeder (2007)
+(Meta-) evaluation of machine translation.
+
+In Proceedings of the Second Workshop on Statistical Machine Translation,
+
+Prague, Czech Republic,  pp. 136–158.
+
+Cited by: <a href="#Ch3.S5.p3">3.5</a>.
+
+</li>
+<li id="bib.bib241">
+C. Callison-Burch, M. Osborne and P. Koehn (2006)
+Re-evaluating the role of BLEU in machine translation research.
+
+In 11th Conference of the European Chapter of the Association for Computational Linguistics,
+
+Trento, Italy,  pp. 249–256.
+
+Cited by: <a href="#Ch3.S5.p2">3.5</a>.
+
+</li>
+<li id="bib.bib105">
+K. Cho, B. van Merrienboer, C. Gulcehre, D. Bahdanau, F. Bougares, H. Schwenk and Y. Bengio (2014)
+Learning phrase representations using RNN encoder-decoder for statistical machine translation.
+
+In Proceedings of the 2014 Conference on Empirical Methods in Natural Language Processing (EMNLP),
+
+Doha, Qatar,  pp. 1724–1734.
+
+Note: arXiv:1406.1078
+
+Cited by: <a href="#Ch6.p1">Chapter 6</a>.
+
+</li>
+<li id="bib.bib76">
+M. Collins and N. Duffy (2002)
+New ranking algorithms for parsing and tagging: kernels over discrete structures, and the voted perceptron.
+
+In Proceedings of the 40th Annual Meeting on Association for Computational Linguistics,
+
+Pennsylvania, PA, USA,  pp. 263–270.
+
+Cited by: <a href="#Ch5.S1.p2">5.1</a>.
+
+</li>
+<li id="bib.bib125">
+R. Dale, D. Scott and B. Di Eugenio (1998)
+Introduction to the special issue on natural language generation.
+
+Computational Linguistics 24 (3),  pp. 346–353.
+
+Cited by: <a href="#Ch2.p2">Chapter 2</a>.
+
+</li>
+<li id="bib.bib79">
+G. Doddington (2002)
+Automatic evaluation of machine translation quality using N-gram co-occurrence statistics.
+
+In Proceedings of the Second International Conference on Human Language Technology Research,
+
+San Francisco, CA, USA,  pp. 138–145.
+
+Cited by: <a href="#Ch3.S5.p3">3.5</a>,
+<a href="#Ch5.S2.p1">5.2</a>.
+
+</li>
+<li id="bib.bib112">
+O. Dušek, L. Gomes, M. Novák, M. Popel and R. Rosa (2015)
+New language pairs in tectomt.
+
+In Proceedings of the 10th Workshop on Machine Translation,
+
+Lisbon, Portugal,  pp. 98–104.
+
+Cited by: <a href="#Ch9.S3.SS0.SSS0.Px2.p1">Chapter 9</a>.
+
+</li>
+<li id="bib.bib2">
+O. Dušek and F. Jurčíček (2013)
+Robust multilingual statistical morphological generation models.
+
+In Proceedings of the ACL Student Research Workshop,
+
+Sofia,  pp. 158–164.
+
+Cited by: <a href="#Ch9.S3.SS0.SSS0.Px2.p1">Chapter 9</a>.
+
+</li>
+<li id="bib.bib101">
+O. Dušek and F. Jurčíček (2015)
+Training a natural language generator from unaligned data.
+
+In Proceedings of the 53rd Annual Meeting of the Association for Computational Linguistics and the 7th International Joint Conference on Natural Language Processing,
+
+Beijing, China,  pp. 451–461.
+
+Cited by: <a href="#Ch9.S3.SS0.SSS0.Px1.p1">Chapter 9</a>.
+
+</li>
+<li id="bib.bib225">
+O. Dušek and F. Jurčíček (2016a)
+A context-aware natural language generation dataset for dialogue systems.
+
+In Proceedings of RE-WOCHAT: Workshop on Collecting and Generating Resources for Chatbots and Conversational Agents – Development and Evaluation,
+
+PortoroÅ¾, Slovenia,  pp. 6–9.
+
+Cited by: <a href="#Ch9.S3.SS0.SSS0.Px5.p1">Chapter 9</a>.
+
+</li>
+<li id="bib.bib224">
+O. Dušek and F. Jurčíček (2016b)
+A context-aware natural language generator for dialogue systems.
+
+In Proceedings of the 17th Annual Meeting of the Special Interest Group on Discourse and Dialogue,
+
+Los Angeles, CA, USA,  pp. 185–190.
+
+Cited by: <a href="#Ch9.S3.SS0.SSS0.Px3.p1">Chapter 9</a>.
+
+</li>
+<li id="bib.bib216">
+O. Dušek and F. Jurčíček (2016c)
+Sequence-to-sequence generation for spoken dialogue via deep syntax trees and strings.
+
+In Proceedings of the 54th Annual Meeting of the Association for Computational Linguistics,
+
+Berlin, Germany.
+
+Note: arXiv:1606.05491
+
+Cited by: <a href="#Ch9.S3.SS0.SSS0.Px1.p1">Chapter 9</a>,
+<a href="#Ch9.S3.SS0.SSS0.Px4.p1">Chapter 9</a>.
+
+</li>
+<li id="bib.bib205">
+G. Durrett and J. DeNero (2013)
+Supervised learning of complete morphological paradigms.
+
+In Proceedings of NAACL-HLT 2013,
+
+Atlanta, GA, USA,  pp. 1185–1195.
+
+Cited by: <a href="#Ch4.S2.p2">4.2</a>.
+
+</li>
+<li id="bib.bib40">
+R. E. Fan, K. W. Chang, C. J. Hsieh, X. R. Wang and C. J. Lin (2008)
+LIBLINEAR: a library for large linear classification.
+
+The Journal of Machine Learning Research 9,  pp. 1871–1874.
+
+Cited by: <a href="#Ch4.S2.p3">4.2</a>.
+
+</li>
+<li id="bib.bib220">
+H. Friedberg, D. Litman and S. B. Paletz (2012)
+Lexical entrainment and success in student engineering groups.
+
+In IEEE Spoken Language Technology Workshop,
+
+Miami, FL, USA,  pp. 404–409.
+
+Cited by: <a href="#Ch7.p1">Chapter 7</a>.
+
+</li>
+<li id="bib.bib242">
+D. Gkatzia and S. Mahamood (2015)
+A snapshot of NLG evaluation practices 2005 - 2014.
+
+In Proceedings of the 15th European Workshop on Natural Language Generation (ENLG),
+
+Brighton, England, UK,  pp. 57–60.
+
+Cited by: <a href="#Ch3.S5.p1">3.5</a>.
+
+</li>
+<li id="bib.bib32">
+J. Hajič, M. Ciaramita, R. Johansson, D. Kawahara, M. Martí, L. MÃ rquez, A. Meyers, J. Nivre, S. PadÃ³ and J. Å tÄpánek (2009)
+The CoNLL-2009 shared task: syntactic and semantic dependencies in multiple languages.
+
+In Proceedings of the Thirteenth Conference on Computational Natural Language Learning: Shared Task,
+
+Boulder, CO, USA,  pp. 1–18.
+
+Cited by: <a href="#Ch4.S2.p4">4.2</a>.
+
+</li>
+<li id="bib.bib14">
+J. Hajič, E. Hajičová, J. Panevová, P. Sgall, O. Bojar, S. Cinková, E. Fučíková, M. Mikulová, P. Pajas, J. , J. Semecký, J. Å indlerová, J. Å tÄpánek, J. , Z. Urešová and Z. Žabokrtský (2012)
+Announcing Prague Czech-English Dependency Treebank 2.0.
+
+In Proceedings of LREC,
+
+Istanbul, Turkey,  pp. 3153–3160.
+
+Cited by: <a href="#Ch4.S1.p2">4.1</a>.
+
+</li>
+<li id="bib.bib95">
+P. E. Hart, N. J. Nilsson and B. Raphael (1968)
+A formal basis for the heuristic determination of minimum cost paths.
+
+IEEE Transactions on Systems Science and Cybernetics 4 (2),  pp. 100–107.
+
+Cited by: <a href="#Ch5.S1.p1">5.1</a>.
+
+</li>
+<li id="bib.bib275">
+H. Hastie and A. Belz (2014)
+A comparative evaluation methodology for NLG in interactive systems.
+
+In Proceedings of the Ninth International Conference on Language Resources and Evaluation,
+
+Reykjavík, Iceland,  pp. 4004–4011.
+
+Cited by: <a href="#Ch3.S5.p1">3.5</a>.
+
+</li>
+<li id="bib.bib223">
+Z. Hu, G. Halberg, C. Jimenez and M. Walker (2014)
+Entrainment in pedestrian direction giving: How many kinds of entrainment.
+
+In Proceedings of the IWSDS’2014 Workshop on Spoken Dialog Systems,
+
+Napa, CA, USA,  pp. 90–101.
+
+Cited by: <a href="#Ch7.p1">Chapter 7</a>.
+
+</li>
+<li id="bib.bib123">
+F. Jurčíček, O. Dušek, O. Plátek and L. Žilka (2014)
+Alex: A Statistical Dialogue Systems Framework.
+
+In Text, Speech and Dialogue: 17th International Conference, TSD,  P. Sojka, A. Horák, I. Kopeček and K. Pala (Eds.),
+
+Lecture Notes in Artificial Intelligence, Brno, Czech Republic,  pp. 587–594.
+
+Cited by: <a href="#Ch3.S1.p1">3.1</a>.
+
+</li>
+<li id="bib.bib71">
+P. Koehn, F. J. Och and D. Marcu (2003)
+Statistical phrase-based translation.
+
+In Proceedings of NAACL-HLT - Volume 1,
+
+Edmonton, Canada,  pp. 48–54.
+
+Cited by: <a href="#Ch5.S1.p1">5.1</a>.
+
+</li>
+<li id="bib.bib68">
+P. Koehn (2004)
+Statistical significance tests for machine translation evaluation.
+
+In Proceedings of the 2004 Conference on Empirical Methods in Natural Language Processing,
+
+Barcelona, Spain,  pp. 388–395.
+
+Cited by: <a href="#Ch5.S2.p2">5.2</a>,
+<a href="#Ch6.S2.p3">6.2</a>,
+<a href="#Ch7.S3.p2">7.3</a>.
+
+</li>
+<li id="bib.bib276">
+P. Koehn (2010)
+Statistical machine translation.
+
+ Cambridge University Press, Cambridge; New York.
+
+Cited by: <a href="#Ch3.S5.p3">3.5</a>.
+
+</li>
+<li id="bib.bib5">
+I. Konstas and M. Lapata (2013)
+A global model for concept-to-text generation.
+
+Journal of Artificial Intelligence Research 48,  pp. 305–346.
+
+Cited by: <a href="#Ch2.S1.p3">2.1</a>,
+<a href="#Ch3.S2.p1">3.2</a>.
+
+</li>
+<li id="bib.bib88">
+I. Langkilde and K. Knight (1998)
+Generation that exploits corpus-based statistical knowledge.
+
+In Proceedings of the 36th Annual Meeting of the ACL and 17th International Conference on Computational Linguistics-Volume 1,
+
+Montréal, Canada,  pp. 704–710.
+
+Cited by: <a href="#Ch2.S2.p2">2.2</a>.
+
+</li>
+<li id="bib.bib34">
+P. Liang, M. I. Jordan and D. Klein (2009)
+Learning semantic correspondences with less supervision.
+
+In Proceedings of the Joint Conference of the 47th Annual Meeting of the ACL and the 4th International Joint Conference on Natural Language Processing of the AFNLP: Volume 1-Volume 1,
+
+Singapore,  pp. 91–99.
+
+Cited by: <a href="#Ch2.S3.p1">2.3</a>.
+
+</li>
+<li id="bib.bib3">
+J. Lopes, M. Eskenazi and I. Trancoso (2013)
+Automated two-way entrainment to improve spoken dialog system performance.
+
+In 2013 IEEE International Conference on Acoustics, Speech and Signal Processing (ICASSP),
+
+ pp. 8372–8376.
+
+Cited by: <a href="#Ch7.p1">Chapter 7</a>.
+
+</li>
+<li id="bib.bib102">
+J. Lopes, M. Eskenazi and I. Trancoso (2015)
+From rule-based to data-driven lexical entrainment models in spoken dialog systems.
+
+Computer Speech &amp; Language 31 (1),  pp. 87–112.
+
+Cited by: <a href="#Ch7.p1">Chapter 7</a>.
+
+</li>
+<li id="bib.bib20">
+F. Mairesse, M. Gašić, F. Jurčíček, S. Keizer, B. , K. Yu and S. Young (2010)
+Phrase-based statistical language generation using graphical models and active learning.
+
+In Proceedings of the 48th Annual Meeting of the Association for Computational Linguistics,
+
+Uppsala, Sweden,  pp. 1552–1561.
+
+Cited by: <a href="#Ch2.S1.p3">2.1</a>,
+<a href="#Ch2.S2.p2">2.2</a>,
+<a href="#Ch2.S3.p2">2.3</a>,
+<a href="#Ch3.S2.p1">3.2</a>,
+<a href="#Ch5.S2.p1">5.2</a>,
+<a href="#Ch5.S2.p2">5.2</a>,
+<a href="#Ch6.S2.p1">6.2</a>,
+<a href="#Ch6.T1">Table 6.1</a>,
+<a href="#Ch6.p1">Chapter 6</a>,
+<a href="#Ch9.S3.SS0.SSS0.Px1.p1">Chapter 9</a>.
+
+</li>
+<li id="bib.bib33">
+F. Mairesse and M. Walker (2008)
+Trainable generation of big-five personality styles through data-driven parameter estimation.
+
+In Proceedings of the 46th Annual Meeting of the Association for Computational Linguistics on Human Language Technologies,
+
+Columbus, OH, USA,  pp. 165–173.
+
+Cited by: <a href="#Ch2.S2.p2">2.2</a>.
+
+</li>
+<li id="bib.bib116">
+H. Mei, M. Bansal and M. R. Walter (2016)
+What to talk about and how? Selective generation using LSTMs with coarse-to-fine alignment.
+
+In The 15th Annual Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies,
+
+San Diego, CA, USA,  pp. 720–730.
+
+Note: arXiv: 1509.00838
+
+Cited by: <a href="#Ch6.p2">Chapter 6</a>.
+
+</li>
+<li id="bib.bib80">
+F. J. Och, N. Ueffing and H. Ney (2001)
+An efficient A* search algorithm for statistical machine translation.
+
+In Proceedings of the Workshop on Data-driven Methods in Machine Translation - Volume 14,
+
+Toulouse, France,  pp. 1–8.
+
+Cited by: <a href="#Ch5.S1.p1">5.1</a>.
+
+</li>
+<li id="bib.bib59">
+D. S. Paiva and R. Evans (2005)
+Empirically-based control of natural language generation.
+
+In Proceedings of the 43rd Annual Meeting of ACL,
+
+Stroudsburg, PA, USA,  pp. 58–65.
+
+Cited by: <a href="#Ch2.S2.p2">2.2</a>.
+
+</li>
+<li id="bib.bib78">
+K. Papineni, S. Roukos, T. Ward and W.-J. Zhu (2002)
+BLEU: a method for automatic evaluation of machine translation.
+
+In Proceedings of the 40th annual meeting of the Association for Computational Linguistics,
+
+Pennsylvania, PA, USA,  pp. 311–318.
+
+Cited by: <a href="#Ch3.S5.p3">3.5</a>,
+<a href="#Ch4.S1.p2">4.1</a>,
+<a href="#Ch5.S2.p1">5.2</a>.
+
+</li>
+<li id="bib.bib254">
+E. Pavlick, M. Post, A. Irvine, D. Kachaev and C. Callison (2014)
+The language demographics of Amazon Mechanical Turk.
+
+Transactions of the Association for Computational Linguistics 2,  pp. 79–92.
+
+Cited by: <a href="#Ch8.S1.p1">8.1</a>.
+
+</li>
+<li id="bib.bib24">
+M. Popel and Z. Žabokrtský (2010)
+TectoMT: modular NLP framework.
+
+In Proceedings of IceTAL, 7th International Conference on Natural Language Processing,
+
+Reykjavík,  pp. 293–304.
+
+Cited by: <a href="#Ch3.S4.p2">3.4</a>,
+<a href="#Ch4.S1.p1">4.1</a>.
+
+</li>
+<li id="bib.bib195">
+M. Popel, O. Dušek, A. Branco, L. Gomes, J. , J. Silva, E. Avramidis, Burchardt, A. Lommel, N. Aranberri, G. Labaka, V. N. Gertjan, R. Del Gaudio, M. Novák, R. Rosa, J. Hlaváč, J. Hajič, V. Todorova and A. Popov (2015)
+Report on the second MT pilot and its evaluation.
+
+Technical report
+
+Technical Report Deliverable D2.8,  QTLeap, EC FP7 Project no. 610516.
+
+Cited by: <a href="#Ch4.S1.p3">4.1</a>,
+<a href="#Ch9.S3.SS0.SSS0.Px2.p1">Chapter 9</a>.
+
+</li>
+<li id="bib.bib191">
+M. Popel (2009)
+Ways to improve the quality of English-Czech machine translation.
+
+Master’s thesis, Charles University in Prague.
+
+Cited by: <a href="#Ch4.S1.p1">4.1</a>.
+
+</li>
+<li id="bib.bib46">
+J. Ptáček and Z. Žabokrtský (2007)
+Dependency-based sentence synthesis component for Czech.
+
+In Proceedings of 3rd International Conference on Meaning-Text Theory,
+
+Wiener Slawistischer Almanach, Vol. 69,  pp. 407–415.
+
+Cited by: <a href="#Ch2.S2.p1">2.2</a>,
+<a href="#Ch3.S4.p2">3.4</a>.
+
+</li>
+<li id="bib.bib84">
+E. Reiter and R. Dale (2000)
+Building natural language generation systems.
+
+ Cambridge University Press.
+
+Cited by: <a href="#Ch2.S1.p1">2.1</a>.
+
+</li>
+<li id="bib.bib226">
+D. Reitter, F. Keller and J. D. Moore (2006)
+Computational modelling of structural priming in dialogue.
+
+In Proceedings of the Human Language Technology Conference of the NAACL, Companion Volume: Short Papers,
+
+New York City, NY, USA,  pp. 121–124.
+
+Cited by: <a href="#Ch7.p1">Chapter 7</a>.
+
+</li>
+<li id="bib.bib196">
+R. Rosa, O. Dušek, M. Novák and M. Popel (2015)
+Translation model interpolation for domain adaptation in TectoMT.
+
+In Proceedings of the 1st Deep Machine Translation Workshop,
+
+Prague, Czech Republic,  pp. 89–96.
+
+Cited by: <a href="#Ch4.S1.p3">4.1</a>.
+
+</li>
+<li id="bib.bib119">
+A. I. Rudnicky, E. H. Thayer, P. C. Constantinides, C. , R. Shern, K. A. Lenzo, W. Xu and A. Oh (1999)
+Creating natural dialogs in the Carnegie Mellon Communicator system.
+
+In Proceedings of the 6th European Conference on Speech Communication and Technology,
+
+Lisbon, Portugal,  pp. 1531–1534.
+
+Cited by: <a href="#Ch2.S2.p1">2.2</a>.
+
+</li>
+<li id="bib.bib257">
+K. Sakaguchi, M. Post and B. Van Durme (2014)
+Efficient elicitation of annotations for human evaluation of machine translation.
+
+In Proceedings of the Ninth Workshop on Statistical Machine Translation,
+
+Baltimore, MD, USA,  pp. 1–11.
+
+Cited by: <a href="#Ch8.S3.p2">8.3</a>.
+
+</li>
+<li id="bib.bib94">
+P. Sgall, E. Hajičová and J. Panevová (1986)
+The meaning of the sentence in its semantic and pragmatic aspects.
+
+ D. Reidel, Dordrecht.
+
+Cited by: <a href="#Ch3.S4.p2">3.4</a>.
+
+</li>
+<li id="bib.bib163">
+S. Sharma, J. He, K. Suleman, H. Schulz and P.  (2016)
+Natural language generation in dialogue using lexicalized and delexicalized data.
+
+arXiv:1606.03632 [cs].
+
+Cited by: <a href="#Ch8.S2.SS0.SSS0.Px1.p1">8.2</a>.
+
+</li>
+<li id="bib.bib175">
+S. G. Sripada, E. Reiter, J. Hunter and J. Yu (2003)
+Exploiting a parallel text-data corpus.
+
+In Proceedings of the Corpus Linguistics 2003 conference,
+
+Lancaster, England, UK,  pp. 734–743.
+
+Cited by: <a href="#Ch2.S3.p1">2.3</a>.
+
+</li>
+<li id="bib.bib69">
+A. Stent, R. Prasad and M. Walker (2004)
+Trainable sentence planning for complex information presentation in spoken dialog systems.
+
+In Proceedings of the 42nd Annual Meeting on Association for Computational Linguistics,
+
+Barcelona, Spain,  pp. 79–86.
+
+Cited by: <a href="#Ch5.p1">Chapter 5</a>,
+<a href="#Ch6.p1">Chapter 6</a>.
+
+</li>
+<li id="bib.bib243">
+A. Stent, M. Marge and M. Singhai (2005)
+Evaluating evaluation methods for generation in the presence of variation.
+
+In International Conference on Intelligent Text Processing and Computational Linguistics,
+
+Mexico City, Mexico,  pp. 341–351.
+
+Cited by: <a href="#Ch3.S5.p2">3.5</a>.
+
+</li>
+<li id="bib.bib98">
+J. Straková, M. Straka and J. Hajič (2014)
+Open-source tools for morphology, lemmatization, POS tagging and named entity recognition.
+
+In Proceedings of 52nd Annual Meeting of the Association for Computational Linguistics: System Demonstrations,
+
+Baltimore, MA, USA,  pp. 13–18.
+
+Cited by: <a href="#Ch4.S2.p5">4.2</a>,
+<a href="#Ch8.S2.SS0.SSS0.Px2.p1">8.2</a>.
+
+</li>
+<li id="bib.bib104">
+I. Sutskever, O. Vinyals and Q. V. Le (2014)
+Sequence to sequence learning with neural networks.
+
+In Advances in Neural Information Processing Systems,
+
+Montréal, Canada,  pp. 3104–3112.
+
+Note: arXiv:1409.3215
+
+Cited by: <a href="#Ch6.S1.p3">6.1</a>,
+<a href="#Ch6.p1">Chapter 6</a>.
+
+</li>
+<li id="bib.bib62">
+K. van Deemter, E. Krahmer and M. Theune (2005)
+Real vs. template-based natural language generation: a false opposition?.
+
+Computational Linguistics 31 (1),  pp. 15–24.
+
+Cited by: <a href="#Ch2.S2.p1">2.2</a>.
+
+</li>
+<li id="bib.bib81">
+M. A. Walker, O. Rambow and M. Rogati (2001)
+SPoT: a trainable sentence planner.
+
+In Proceedings of 2nd meeting of NAACL,
+
+Stroudsburg, PA, USA,  pp. 1–8.
+
+Cited by: <a href="#Ch2.S1.p3">2.1</a>,
+<a href="#Ch5.p1">Chapter 5</a>.
+
+</li>
+<li id="bib.bib99">
+T.-H. Wen, M. Gašić, N. Mrkšić, P.-H. Su, D. Vandyke and S.  (2015a)
+Semantically conditioned lstm-based natural language generation for spoken dialogue systems.
+
+In Proceedings of the 2015 Conference on Empirical Methods in Natural Language Processing,
+
+Lisbon, Portugal,  pp. 1711–1721.
+
+Cited by: <a href="#Ch2.S2.p2">2.2</a>,
+<a href="#Ch2.S3.p2">2.3</a>,
+<a href="#Ch3.S1.p1">3.1</a>,
+<a href="#Ch3.S5.p3">3.5</a>,
+<a href="#Ch6.S2.p4">6.2</a>,
+<a href="#Ch6.p1">Chapter 6</a>,
+<a href="#Ch6.p2">Chapter 6</a>,
+<a href="#Ch8.S1.p1">8.1</a>.
+
+</li>
+<li id="bib.bib100">
+T.-H. Wen, M. Gasic, D. Kim, N. Mrksic, P.-H. Su, V. D. and S. Young (2015b)
+Stochastic language generation in dialogue using recurrent neural networks with convolutional sentence reranking.
+
+In Proceedings of the 16th Annual Meeting of the Special Interest Group on Discourse and Dialogue,
+
+Prague, Czech Republic,  pp. 275–284.
+
+Cited by: <a href="#Ch2.S2.p2">2.2</a>,
+<a href="#Ch2.S3.p2">2.3</a>,
+<a href="#Ch6.p1">Chapter 6</a>,
+<a href="#Ch6.p2">Chapter 6</a>.
+
+</li>
+<li id="bib.bib166">
+T. Wen, M. Gasic, N. Mrksic, L. Rojas-Barahona, P. Su, S. Ultes, D. Vandyke and S. Young (2016)
+A network-based end-to-end trainable task-oriented dialogue system.
+
+arXiv:1604.04562 [cs, stat].
+
+Cited by: <a href="#Ch9.S3.SS0.SSS0.Px5.p3">Chapter 9</a>.
+
+</li>
+<li id="bib.bib164">
+T. Wen, M. Gasic, N. Mrksic, L. Rojas-Barahona, P. Su, D. Vandyke and S. Young (2016)
+Multi-domain neural network language generation for spoken dialogue systems.
+
+In Proceedings of the 2016 Conference of the North American Chapter of the Association for Computational Linguistics: Human Language Technologies,
+
+San Diego, CA, USA,  pp. 120–129.
+
+Note: arXiv: 1603.01232
+
+Cited by: <a href="#Ch2.S3.p2">2.3</a>.
+
+</li>
+<li id="bib.bib49">
+M. White, R. Rajkumar and S. Martin (2007)
+Towards broad coverage surface realization with CCG.
+
+In Proceedings of the Workshop on Using Corpora for NLG: Language Generation and Machine Translation (UCNLG+MT),
+
+Copenhagen, Denmark,  pp. 22–30.
+
+Cited by: <a href="#Ch2.S2.p1">2.2</a>.
+
+</li>
+<li id="bib.bib271">
+J. D. Williams, K. Asadi and G. Zweig (2017)
+Hybrid Code Networks: practical and efficient end-to-end dialog control with supervised and reinforcement learning.
+
+arXiv:1702.03274 [cs].
+
+Cited by: <a href="#Ch9.S3.SS0.SSS0.Px5.p3">Chapter 9</a>.
+
+</li>
+<li id="bib.bib45">
+Y. W. Wong and R. J. Mooney (2007)
+Generation by inverting a semantic parser that uses statistical machine translation.
+
+In Proceedings of Human Language Technologies: The Conference of the North American Chapter of the ACL (NAACL-HLT-07),
+
+Prague, Czech Republic,  pp. 172–179.
+
+Cited by: <a href="#Ch2.S3.p1">2.3</a>.
+
+</li>
+<li id="bib.bib26">
+S. Young, M. Gašić, S. Keizer, F. Mairesse, J. Schatzmann, B. Thomson and K. Yu (2010)
+The hidden information state model: a practical framework for POMDP-based spoken dialogue management.
+
+Computer Speech &amp; Language 24 (2),  pp. 150–174.
+
+Cited by: <a href="#Ch3.S1.p1">3.1</a>.
+
+</li>
+<li id="bib.bib42">
+Z. Žabokrtský, J. Ptáček and P. Pajas (2008)
+TectoMT: highly modular MT system with tectogrammatics used as transfer layer.
+
+In Proceedings of the Third Workshop on Statistical Machine Translation,
+
+Columbus, OH, USA,  pp. 167–170.
+
+Cited by: <a href="#Ch3.S4.p2">3.4</a>,
+<a href="#Ch4.S1.p1">4.1</a>,
+<a href="#Ch9.S3.SS0.SSS0.Px2.p1">Chapter 9</a>.
+
+</li>
+</ul>
+</section>
+</article>
+</div>
+<footer>
+<div>Heavily edited after a conversion using <a href="http://dlmf.nist.gov/LaTeXML/">LaTeXML <img src="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAsAAAAOCAYAAAD5YeaVAAAAAXNSR0IArs4c6QAAAAZiS0dEAP8A/wD/oL2nkwAAAAlwSFlzAAALEwAACxMBAJqcGAAAAAd0SU1FB9wKExQZLWTEaOUAAAAddEVYdENvbW1lbnQAQ3JlYXRlZCB3aXRoIFRoZSBHSU1Q72QlbgAAAdpJREFUKM9tkL+L2nAARz9fPZNCKFapUn8kyI0e4iRHSR1Kb8ng0lJw6FYHFwv2LwhOpcWxTjeUunYqOmqd6hEoRDhtDWdA8ApRYsSUCDHNt5ul13vz4w0vWCgUnnEc975arX6ORqN3VqtVZbfbTQC4uEHANM3jSqXymFI6yWazP2KxWAXAL9zCUa1Wy2tXVxheKA9YNoR8Pt+aTqe4FVVVvz05O6MBhqUIBGk8Hn8HAOVy+T+XLJfLS4ZhTiRJgqIoVBRFIoric47jPnmeB1mW/9rr9ZpSSn3Lsmir1fJZlqWlUonKsvwWwD8ymc/nXwVBeLjf7xEKhdBut9Hr9WgmkyGEkJwsy5eHG5vN5g0AKIoCAEgkEkin0wQAfN9/cXPdheu6P33fBwB4ngcAcByHJpPJl+fn54mD3Gg0NrquXxeLRQAAwzAYj8cwTZPwPH9/sVg8PXweDAauqqr2cDjEer1GJBLBZDJBs9mE4zjwfZ85lAGg2+06hmGgXq+j3+/DsixYlgVN03a9Xu8jgCNCyIegIAgx13Vfd7vdu+FweG8YRkjXdWy329+dTgeSJD3ieZ7RNO0VAXAPwDEAO5VKndi2fWrb9jWl9Esul6PZbDY9Go1OZ7PZ9z/lyuD3OozU2wAAAABJRU5ErkJggg==" alt="[LOGO]">.</a>
+</div></footer>
+</div>
+</body>
+</html>
