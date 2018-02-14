@@ -26,6 +26,29 @@ body {
 }
 figure, table {
     padding: 1.5em;
+    border-spacing: 0px;
+}
+table.bottom-bind {
+    padding-bottom: 0;
+}
+table.wider td, table.wider th {
+    padding-right: 0.5em;
+}
+td.b-tb, th.b-tb {
+    border-top: 1px solid gray;
+    border-bottom: 1px solid gray;
+}
+td.b-b, th.b-b {
+    border-bottom: 1px solid gray;
+}
+td.b-db, th.b-db {
+    border-bottom: 1px dotted gray;
+}
+td.b-t, th.b-t {
+    border-top: 1px solid gray;
+}
+th.a-l {
+    text-align: left;
 }
 figcaption {
     padding-top: 1em;
@@ -41,22 +64,48 @@ cite {
 <article>
 <h1>Novel Methods for Natural Language Generation
 <br>in Spoken Dialogue Systems</h1>
-<div>
-
-Ondřej Dušek
-
+<div style="font-size: 120%; margin-top: 2em;">
+Author: <strong>Ondřej Dušek</strong><br>
+Supervisor: <strong>Filip Jurčíček</strong><br>
+Ph.D. thesis, Charles University<br>
+Prague 2017
 </div>
-<div>2017</div>
+<section id="contents">
+<h2>Table of Contents</h2>
+<ol>
+    <li><a href="#Ch1">Introduction</a></li>
+    <li><a href="#Ch2">Adaptive Methods in NLG So Far</a></li>
+    <li><a href="#Ch3">Decomposing the Problem</a></li>
+    <li><a href="#Ch4">Experiments in Surface Realization</a></li>
+    <li><a href="#Ch5">Perceptron-based Sentence Planning</a></li>
+    <li><a href="#Ch6">Sequence-to-sequence Generation</a></li>
+    <li><a href="#Ch7">Generating User-adaptive Outputs</a></li>
+    <li><a href="#Ch8">Generating Czech</a></li>
+    <li><a href="#Ch9">Conclusions</a></li>
+</ol>
+</section>
 <section id="Ch1">
 <h2>1&nbsp;&nbsp; Introduction</h2>
 <div id="Ch1.p1">
-<p>The task of natural language generation (NLG) is to <strong>convert an abstract meaning representation into a natural language text</strong>. NLG is an integral part of various natural language processing (NLP) applications, including spoken dialogue systems (SDSs), i.e., computer interfaces allowing users to perform various tasks or request information using spoken dialogue.
-</p><p>
-In SDSs, the task of NLG is to convert an abstract representation of the system’s response into a natural language sentence, which is read to the user using a text-to-speech synthesis module (see Figure <a href="#Ch3.F1">1.1</a>).
+<p>The task of natural language generation (NLG) is to <strong>convert an abstract meaning representation into a natural language text</strong> (see Figure <a href="#Ch1.F1">1.1</a>). NLG is an integral part of various natural language processing (NLP) applications, including spoken dialogue systems (SDSs), i.e., computer interfaces allowing users to perform various tasks or request information using spoken dialogue.
+</p>
+<figure id="Ch1.F1">
+<table>
+<tr>
+<td style="text-align:center"><span style="color:#333399;">inform(name=X,eattype=restaurant,food=Italian,area=riverside)</td></tr>
+<tr><td style="text-align:center">↓</td></tr>
+<tr>
+<td style="text-align:center">X is an Italian restaurant near the river.</td>
+</tr>
+</table>
+<figcaption>Figure 1.1: The task of NLG.</figcaption>
+</figure>
+<p>
+In SDSs, the task of NLG is to convert an abstract representation of the system’s response into a natural language sentence, which is read to the user using a text-to-speech synthesis module (see Figure <a href="#Ch1.F2">1.2</a>).
 NLG is thus responsible for accurate, comprehensible, and natural presentation of information provided by the SDS and has a significant impact on the overall perception of the system by the user.</p>
 </div>
-<figure id="Ch1.F1"><img src="figs/sds-schema.png" id="Ch1.F1.g1">
-<figcaption>Figure 1.1: A schema of a typical SDS, with the NLG component highlighted.</figcaption>
+<figure id="Ch1.F1"><img src="figs/sds-schema.png" id="Ch1.F2.g1">
+<figcaption>Figure 1.2: A schema of a typical SDS, with the NLG component highlighted.</figcaption>
 </figure>
 <div id="Ch1.p2">
 <p>The main motivation for this work has been the lack of practical statistical approaches in NLG for SDSs: The adoption of statistical NLG in SDSs remained limited until recently, and the NLG component was often reduced to a simple template-filling approach.
@@ -100,30 +149,22 @@ This work thus not only brings a radical improvement over NLG systems based on h
 </section>
 <section id="Ch2">
 <h2>
-2&nbsp;&nbsp; State of the Art: Adaptive Methods in NLG</h2>
+2&nbsp;&nbsp; Adaptive Methods in NLG So Far</h2>
 
 <div id="Ch2.p1">
-<p>In this chapter, we give an introduction into the problem of NLG and briefly discuss previous architectures and available training datasets.</p>
-</div>
-<div id="Ch2.p2">
-<p>In general, NLG is defined as the task of presenting information in natural language: Given input data and a communication goal (e.g., to describe the data or receive user reaction), the system should produce a natural language string that is relevant, well-formed, grammatically correct, and fluent <cite>(Dale et al., <a href="#bib.bib125">1998</a>)</cite>.</p>
+<p>In the following, we discuss previous approaches to NLG and available training data.</p>
 </div>
 <section id="Ch2.S1">
 <h3>
 2.1 The NLG Pipeline</h3>
 
+<!-- TODO add picture here -->
 <div id="Ch2.S1.p1">
-<p>The standard “textbook” description of an NLG system <cite>(Reiter and Dale, <a href="#bib.bib84">2000</a>)</cite> involves a pipeline consisting of three main phases:</p>
+<p>NLG for spoken dialogue typically involves a pipeline with the following two steps:</p>
 <ol id="Ch2.I1">
-<li id="Ch2.I1.i1">
-<div id="Ch2.I1.i1.p1">
-<p><em>Content planning</em> – selecting relevant content from the input data and basic structuring of this content,</p>
-</div>
-</li>
 <li id="Ch2.I1.i2">
 <div id="Ch2.I1.i2.p1">
-<p><em>Sentence planning</em> (also called <em>microplanning</em>) – detailed sentence shaping and expression
-selection,</p>
+<p><em>Sentence planning</em> – sentence shaping and expression selection,</p>
 </div>
 </li>
 <li id="Ch2.I1.i3">
@@ -134,7 +175,7 @@ selection,</p>
 </ol>
 </div>
 <div id="Ch2.S1.p2">
-<p>Most NLG systems follow the standard pipeline more or less closely, but only a few of them implement it as a whole. Many generators focus only on one of the phases while using a very basic implementation of the other or leaving it out completely. NLG systems in SDSs often let the dialogue manager handle content planning and focus only on sentence planning and surface realization.</p>
+<p>Most NLG systems follow the pipeline, but only some of them implement it as a whole. Many generators focus only on one of the phases while using a very basic implementation of the other or leaving it out completely.</p>
 </div>
 <div id="Ch2.S1.p3">
 <p>Some NLG systems choose to replace the pipeline with a joint, end-to-end architecture <cite>(e.g., Angeli et al., <a href="#bib.bib22">2010</a>; Mairesse et al., <a href="#bib.bib20">2010</a>)</cite>.
@@ -152,9 +193,8 @@ Such rule-based generators are still used frequently today. Their main advantage
 </p>
 </div>
 <div id="Ch2.S2.p2">
-<p>Various approaches have been taken to make NLG output more flexible and natural as well as to simplify its reuse in new domains.
-While statistical methods and trainable modules in NLG are not new <cite>(cf.  Langkilde and Knight, <a href="#bib.bib88">1998</a>)</cite>, their adoption has been slower than in most other subfields of NLP.
-Several research paths were pursued for statistical NLG in the last decade; most of them focus on just one of the generation stages or on enhancing the capabilities of an existing rule-based generator, e.g., by introducing trainable parameters <cite>(Paiva and Evans, <a href="#bib.bib59">2005</a>; Mairesse and Walker, <a href="#bib.bib33">2008</a>)</cite>.
+<p>Various approaches were taken to make NLG output more flexible and natural as well as to simplify its reuse in new domains.
+While statistical methods and trainable modules in NLG are not new <cite>(cf.  Langkilde and Knight, <a href="#bib.bib88">1998</a>)</cite>, their adoption has been slower than in most other subfields of NLP and mostly focuses just on enhancing the capabilities of an existing rule-based generator <cite>(Paiva and Evans, <a href="#bib.bib59">2005</a>; Mairesse and Walker, <a href="#bib.bib33">2008</a>)</cite>.
 Fully trainable statistical NLG <cite>(Mairesse et al., <a href="#bib.bib20">2010</a>; Angeli et al., <a href="#bib.bib22">2010</a>)</cite> has been rare.
 Only in the past year or two, new fully trainable NN-based generators <cite>(e.g., Wen et al., <a href="#bib.bib100">2015b</a>, <a href="#bib.bib99">a</a>, but also work described in this thesis)</cite> have been dominating the field.</p>
 </div>
@@ -163,7 +203,7 @@ Only in the past year or two, new fully trainable NN-based generators <cite>(e.g
 <h3>2.3 NLG Training Datasets</h3>
 
 <div id="Ch2.S3.p1">
-<p>The number of publicly available datasets suitable for NLG experiments is rather small, compared to other areas of NLP.
+<p>The number of publicly available datasets suitable for NLG experiments is small compared to other areas of NLP.
 Publicly available datasets are more common in text-based NLG than in NLG for SDSs <cite>(Sripada et al., <a href="#bib.bib175">2003</a>; Wong and Mooney, <a href="#bib.bib45">2007</a>; Liang et al., <a href="#bib.bib34">2009</a>)</cite>.
 However, most of text-based NLG sets assume a content selection step, which is not applicable to our work.</p>
 </div>
@@ -180,7 +220,7 @@ Similar but larger and more diverse datasets for laptop and TV recommendation do
 3&nbsp;&nbsp; Decomposing the Problem</h2>
 
 <div id="Ch3.p1">
-<p>This chapter provides a methodological background for all our experiments in Chapters <a href="#Ch4">4</a> through <a href="#Ch8">8</a>: it is concerned with a closer definition of the task that we are solving, as well as with defining some of the basic aims and features common to all NLG systems developed in the course of this thesis.</p>
+<p>Here we present a closer definition of the task that we are solving, as well as some of the basic aims and features common to all NLG systems developed in the course of this thesis.</p>
 </div>
 <section id="Ch3.S1">
 <h3>3.1 The Input Meaning Representation</h3>
@@ -199,7 +239,7 @@ Similar but larger and more diverse datasets for laptop and TV recommendation do
 <p><em>value</em> – the particular value of the slot in the DA item.</p>
 </li>
 </ul>
-<p>The latter two members of the triplet can be optional (or null). For instance, the DA type <em>hello</em> does not use any slots or values, and the DA type <em>request</em> uses slots but not values since it is used to request a value from the user. DA items with identical DA type are joined in figures for brevity (see Figure <a href="#Ch3.F1">3.1</a>).</p>
+<p>The latter two members of the triplet are optional. For instance, the DA type <em>hello</em> does not use any slots or values, and the DA type <em>request</em> uses slots but not values since it is used to request a value from the user. DA items with identical DA type are joined in figures for brevity (see Figure <a href="#Ch3.F1">3.1</a>).</p>
 </div>
 </section>
 <section id="Ch3.S2">
@@ -217,7 +257,7 @@ Previous NLG systems usually required a separate training data alignment step <c
 <h3>3.3 Delexicalization</h3>
 
 <figure id="Ch3.F2">
-<table>
+<table class="bottom-bind">
 <tr>
 <td><span  style="color:#333399;">inform(</td>
 <td><span  style="color:#333399;">name=“Gourmet Burger Kitchen”, type=placetoeat,</td>
@@ -239,24 +279,23 @@ Previous NLG systems usually required a separate training data alignment step <c
 <td>near Tatties (Trinity Street).</td>
 </tr>
 </table>
-<table>
+<table class="bottom-bind">
 <tr>
 <td><span  style="color:#333399;">inform(</td>
-<td><span  style="color:#333399;">name=X-name, type=placetoeat, eattype=restaurant,</td>
+<td><span  style="color:#333399;">name=<strong>X-name</strong>, type=placetoeat, eattype=restaurant,</td>
 </tr>
 <tr>
 <td></td>
-<td><span  style="color:#333399;">area=“city centre”, near=X-near, food=“Cafe food”, food=“English”)</td>
+<td><span  style="color:#333399;">area=“city centre”, near=<strong>X-near</strong>, food=“Cafe food”, food=“English”)</td>
 </tr>
 </table>
 <table>
 <tr>
 <td>
-X-name is an English and cafe food restaurant in the city centre near X-near.</td>
+<strong>X-name</strong> is an English and cafe food restaurant in the city centre near <strong>X-near</strong>.</td>
 </tr>
 </table>
-<figcaption>Figure 3.2: Delexicalization example (from the BAGEL dataset).</figcaption>
-<p><span  style="font-size:90%;">From top to bottom: lexicalized DA, lexicalized sentence, delexicalized DA, delexicalized sentence. Placeholders in delexicalized items are highlighted.</p>
+<figcaption>Figure 3.2: Delexicalization example (from the BAGEL dataset). Top: original DA and sentence, bottom: corresponding delexicalized DA and sentence.</figcaption>
 </figure>
 <div id="Ch3.S3.p1">
 <p>In all our experiments, we use <em>delexicalization</em> – the replacing of some values, such as restaurant names or time constants, with placeholders (see Figure <a href="#Ch3.F2">3.2</a>). The generator then only works with these placeholders, which are replaced with the respective values in a simple postprocessing stage. This helps to reduce data sparsity issues and improves generalization to unseen slot values since the possible number of values for some slots is unbounded in theory, and most values are only seen once or never in the training data.</p>
@@ -273,23 +312,17 @@ X-name is an English and cafe food restaurant in the city centre near X-near.</t
 <figcaption>Figure 3.3: Example t-tree (middle, t-lemmas in black and formemes in purple), with the corresponding DA (top) and natural language paraphrase (bottom).</figcaption>
 </figure>
 <div id="Ch3.S4.p1">
-<p>We will explore both approaches to NLG sketched in Section <a href="#Ch2.S1">2.1</a>: two-step generation with separate sentence planning and surface realization steps and joint, end-to-end, one-step direct generation. We believe that both avenues have their own advantages and disadvantages (cf. Section <a href="#Ch2.S1">2.1</a>), and that both of them should be explored.</p>
+<p>We explore both approaches to NLG sketched in Section <a href="#Ch2.S1">2.1</a>: two-step generation with separate sentence planning and surface realization steps and joint, end-to-end, one-step direct generation. We believe that both options have their own advantages (cf. Section <a href="#Ch2.S1">2.1</a>), and that both of them should be explored.</p>
 </div>
 <div id="Ch3.S4.p2">
-<p>We opted for using sentence plans in the form of simplified deep syntactic trees (tectogrammatical trees or t-trees) based on the Functional Generative Description <cite>(Sgall et al., <a href="#bib.bib94">1986</a>)</cite> as the intermediate data representation between the stages (sentence plan) due to three main reasons: t-tree surface realization is viable and straightforward (<cite>Ptáček and Žabokrtský, <a href="#bib.bib46">2007</a>; Žabokrtský et al., <a href="#bib.bib42">2008</a></cite>; see Chapter <a href="#Ch4">4</a>), there are efficient algorithms for projective tree structures such as t-trees, and automatic domain-independent parsers into t-trees for several languages are available <cite>(Popel and Žabokrtský, <a href="#bib.bib24">2010</a>)</cite>.</p>
-</div>
-<div id="Ch3.S4.p3">
-<p>The t-tree sentence plan structure is a deep-syntactic dependency tree that only contains nodes for content words (nouns, full verbs, adjectives, adverbs) and coordinating conjunctions (see Figure <a href="#Ch3.F3">3.3</a>). The nodes maintain surface word order. Each node has several attributes; the most important ones for our experiments are <em>t-lemma</em> or deep lemma (base word form of the content word) and <em>formeme</em> (a morphosyntactic label describing the word form).</p>
+<p>We opted for using sentence plans in the form of simplified deep syntactic trees (tectogrammatical trees or t-trees) based on the Functional Generative Description <cite>(Sgall et al., <a href="#bib.bib94">1986</a>)</cite> as the intermediate data representation between the stages (sentence plan).
+The t-tree sentence plan structure is a deep-syntactic dependency tree that only contains nodes for content words (nouns, full verbs, adjectives, adverbs) and coordinating conjunctions (see Figure <a href="#Ch3.F3">3.3</a>). The nodes maintain surface word order. Each node has several attributes; the most important ones for our experiments are <em>t-lemma</em> or deep lemma (base word form of the content word) and <em>formeme</em> (a morphosyntactic label describing the word form).</p>
 </div>
 </section>
 <section id="Ch3.S5">
 <h3>
 3.5 Evaluation Metrics</h3>
 
-<div id="Ch3.S5.p1">
-<p>Several different approaches have been applied to evaluating NLG <cite>(Hastie and Belz, <a href="#bib.bib275">2014</a>; Gkatzia and Mahamood, <a href="#bib.bib242">2015</a>)</cite>: intrinsic, further divided into automatic scores and human ratings, and extrinsic, such as users’ success in completing a task based on information provided by the NLG output.
-In this work, we limit ourselves to evaluating our systems intrinsically.</p>
-</div>
 <div id="Ch3.S5.p2">
 <p>Automatic intrinsic NLG evaluation typically uses metrics developed for machine translation (MT) which are based on word-by-word comparisons against reference texts, measuring word overlap.
 This approach is cheap and fast, but correspondence to human judgments has been disputed <cite>(Stent et al., <a href="#bib.bib243">2005</a>; Callison-Burch et al., <a href="#bib.bib241">2006</a>)</cite>.
@@ -297,7 +330,7 @@ Manual human evaluation provides a more accurate estimate of an NLG system’s p
 </div>
 <div id="Ch3.S5.p3">
 <p>For automatic metrics, we use BLEU <cite>(Papineni et al., <a href="#bib.bib78">2002</a>)</cite> and NIST <cite>(Doddington, <a href="#bib.bib79">2002</a>)</cite> to evaluate our experiments, two of the oldest and arguably the most widely used metrics for NLG. In addition, we apply a complementary metric that is only applicable to delexicalized NLG: <em>slot error rate</em> which estimates the number of semantic errors based on counting DA value placeholders in the generated output <cite>(Wen et al., <a href="#bib.bib99">2015a</a>)</cite>.
-For human evaluation, our task is to decide which system variant will provide outputs preferable to users. Therefore, we focus on direct comparisons of outputs generated for the same input DA, asking users which variant is better/preferred. This promises more consistent and efficient ratings than using Likert scales or multiple judgment criteria <cite>(Callison-Burch et al., <a href="#bib.bib259">2007</a>; Koehn, <a href="#bib.bib276">2010</a>, p. 220)</cite>.</p>
+For human evaluation, our task is to decide which system variant will provide outputs preferable to users. Therefore, we focus on direct comparisons of outputs generated for the same input DA, asking users which variant is better/preferred <cite>(Callison-Burch et al., <a href="#bib.bib259">2007</a>; Koehn, <a href="#bib.bib276">2010</a>, p. 220)</cite>.</p>
 </div>
 </section>
 </section>
@@ -319,7 +352,7 @@ It starts from a copy of the input t-tree, gradually transforming it into a surf
 </div>
 <figure id="Ch4.F1"><img src="figs/x3.png" id="Ch4.F1.g1"  width="677" height="170" alt="">
 <figcaption>Figure 4.1: Rule-based surface realization pipeline example.</figcaption>
-<p><span  style="font-size:90%;">The t-tree for the sentence “The cats would have jumped through the window.” is gradually transformed into a surface dependency tree (a-tree). Uninflected words are shown in red in a-trees, dependency labels are shown in blue. From the left: (1) morphological attributes are determined, word order and agreement are enforced. (2 and 3) prepositions and articles are added. (4) auxiliary verbs are added. (5) punctuation is added, words are inflected, and sentence start is capitalized.</p>
+<p><span  style="font-size:90%;">The t-tree for the sentence “The cats would have jumped through the window.” is gradually transformed into a surface dependency tree (a-tree). Uninflected words are shown in red in a-trees, dependency labels are shown in blue. From the left: (1) morphological attributes are determined, word order and agreement are enforced. (2 and 3) prepositions and articles are added. (4) auxiliary verbs are added. (5) punctuation is added, words are inflected, and sentence start is capitalized.</span></p>
 </figure>
 <div id="Ch4.S1.p2">
 <p>To evaluate the realizer on a broad domain, we ran a round-trip test: We first automatically analyzed English texts into t-trees using Treex, then ran our surface realizer to regenerate texts and evaluated the results using BLEU score <cite>(Papineni et al., <a href="#bib.bib78">2002</a>)</cite> against the originals. On texts from the Prague Czech-English Dependency Treebank 2.0 <cite>(Hajič et al., <a href="#bib.bib14">2012</a>)</cite>, the realizer reached a BLEU of 77.47%. This score is relatively high given that the original is used as the only reference and even minor deviations are penalized.</p>
@@ -337,32 +370,30 @@ It starts from a copy of the input t-tree, gradually transforming it into a surf
 </figure>
 <div id="Ch4.S2.p1">
 <p>To simplify surface realizer development, we introduced a new statistical module for word inflection generation, i.e., deducing the inflected word form given its lemma (base form) and the desired morphological properties (see Figure <a href="#Ch4.F2">4.2</a>).
-There are three traditional approaches to this: avoiding inflection altogether, rule-based methods, and dictionary-based methods.
-Avoiding inflection often leads to unnatural results, rules have scalability issues, and dictionary-based methods cannot generalize to previously unseen word forms.
 Our solution, dubbed <em>Flect</em>, manages to produce natural inflection and is easily trainable for different languages and capable of generalizing to unseen inputs.</p>
 </div>
 <div id="Ch4.S2.p2">
 <p>Similarly to <cite>Bohnet et al. (<a href="#bib.bib21">2010</a>)</cite> and <cite>Durrett and DeNero (<a href="#bib.bib205">2013</a>)</cite>, we reformulate the task of finding the correct word form as a multiclass classification problem. Instead of finding the desired word form directly (which would induce an explosion of possible target classes), the classifier is trained to find the correct inflection pattern: <em>lemma-form edit scripts</em> – rules describing how to transform the base form into the inflected form – are used as target classes.</p>
 </div>
 <div id="Ch4.S2.p3">
-<p>We used the LIBLINEAR logistic regression classifier <cite>(Fan et al., <a href="#bib.bib40">2008</a>)</cite> with the following main feature types: lemma, part-of-speech tag, other morphological features, and lemma suffixes of up to 4 characters. The last feature type allows the classifier to generalize to unknown lemmas since inflection depends mostly on suffixes in many languages.</p>
+<p>We used the LIBLINEAR logistic regression classifier <cite>(Fan et al., <a href="#bib.bib40">2008</a>)</cite>. The feature set, which includes lemma suffixes, allows the classifier to generalize to unknown lemmas since inflection depends mostly on suffixes in many languages.</p>
 </div>
 <figure id="Ch4.T1">
-<table>
+<table class="wider">
 <thead>
 <tr>
-<th>Accuracy (%)</th>
-<th>English</th>
-<th>Czech</th>
-<th>German</th>
-<th>Spanish</th>
-<th>Catalan</th>
-<th>Japanese</th>
+<th class="b-tb">Accuracy (%)</th>
+<th class="b-tb">English</th>
+<th class="b-tb">Czech</th>
+<th class="b-tb">German</th>
+<th class="b-tb">Spanish</th>
+<th class="b-tb">Catalan</th>
+<th class="b-tb">Japanese</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<th>Baseline</th>
+<th class="a-l">Baseline</th>
 <td>98.94</td>
 <td>92.88</td>
 <td></td>
@@ -371,18 +402,18 @@ Our solution, dubbed <em>Flect</em>, manages to produce natural inflection and i
 <td></td>
 </tr>
 <tr>
-<th>Flect</th>
-<td>99.56</td>
-<td>99.45</td>
-<td>96.46</td>
-<td>99.01</td>
-<td>98.72</td>
-<td>99.94</td>
+<th class="a-l b-b">Flect</th>
+<td class="b-b">99.56</td>
+<td class="b-b">99.45</td>
+<td class="b-b">96.46</td>
+<td class="b-b">99.01</td>
+<td class="b-b">98.72</td>
+<td class="b-b">99.94</td>
 </tr>
 </tbody>
 </table>
 <figcaption>Table 4.1: Morphology generation results on CoNLL 2009 datasets.</figcaption>
-<p>The table shows a percentage of correctly predicted inflected word forms. <em>Baseline</em> is a simple dictionary learned from the same data, where unknown words are left uninflected.</p>
+<p><span  style="font-size:90%;">The table shows a percentage of correctly predicted inflected word forms. <em>Baseline</em> is a simple dictionary learned from the same data, where unknown words are left uninflected.</span></p>
 </figure>
 <div id="Ch4.S2.p4">
 <p>We evaluated our Flect morphology generator on six languages using the CoNLL 2009 Shared Task data sets <cite>(Hajič et al., <a href="#bib.bib32">2009</a>)</cite>, and compared it to a simple dictionary baseline for English and Czech (see Table <a href="#Ch4.T1">4.1</a>). We can see that Flect is able to predict the majority of word forms correctly and significantly improves over a dictionary baseline by generalizing to word forms unseen in the training set. The lower score for German is caused partly by insufficient information in the morphological tags.</p>
@@ -445,29 +476,29 @@ To outweigh this bias, we introduced a novel modification of the perceptron upda
 5.2 Experiments</h3>
 
 <figure id="Ch5.T1">
-<table>
+<table class="wider">
 <thead>
 <tr>
-<th>Setup</th>
-<th>BLEU</th>
-<th>NIST</th>
+<th class="b-tb a-l">Setup</th>
+<th class="b-tb">BLEU</th>
+<th class="b-tb">NIST</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<th>Basic perceptron updates</th>
+<th class="a-l">Basic perceptron updates</th>
 <td>54.24</td>
 <td>4.643</td>
 </tr>
 <tr>
-<th>+ Differing subtree updates</th>
+<th class="a-l">+ Differing subtree updates</th>
 <td>58.70</td>
 <td>4.876</td>
 </tr>
 <tr>
-<th>+ Future promise</th>
-<td>59.89</td>
-<td>5.231</td>
+<th class="a-l b-b">+ Future promise</th>
+<td class="b-b">59.89</td>
+<td class="b-b">5.231</td>
 </tr>
 </tbody>
 </table>
@@ -492,7 +523,7 @@ On the other hand, the outputs are not free of semantic errors (missing, repeate
 </section>
 <section id="Ch6">
 <h2>
-6&nbsp;&nbsp; Sequence-to-Sequence Generation Experiments</h2>
+6&nbsp;&nbsp; Sequence-to-Sequence Generation</h2>
 
 <div id="Ch6.p1">
 <p>With the recent emergence of models based on recurrent neural networks (RNNs) for various tasks in NLP, most notably sequence-to-sequence (seq2seq) models with attention for MT <cite>(Cho et al., <a href="#bib.bib105">2014</a>; Sutskever et al., <a href="#bib.bib104">2014</a>)</cite> and first RNN-based NLG approaches <cite>(Wen et al., <a href="#bib.bib100">2015b</a>, <a href="#bib.bib99">a</a>)</cite>, we understood the power of this approach and decided to adapt seq2seq generation to our task.
@@ -543,13 +574,13 @@ This is compared to the items in the input DA and the number of discrepancies fo
 BAGEL data set <cite>(Mairesse et al., <a href="#bib.bib20">2010</a>)</cite>, without using the fine-grained semantic alignments.</p>
 </div>
 <figure id="Ch6.T1">
-<table>
+<table class="wider">
 <tbody>
 <tr>
-<td>Setup</td>
-<td>BLEU</td>
-<td>NIST</td>
-<td>SemErr</td>
+<th class="b-tb">Setup</th>
+<th class="b-tb">BLEU</th>
+<th class="b-tb">NIST</th>
+<th class="b-tb">SemErr</th>
 </tr>
 <tr>
 <td>
@@ -558,14 +589,13 @@ BAGEL data set <cite>(Mairesse et al., <a href="#bib.bib20">2010</a>)</cite>, wi
 <td>
 <math id="Ch6.T1.m1"  alttext="\sim" display="inline"><mo>∼</mo></math>67</td>
 <td>-</td>
-<td>
-<span style="visibility:hidden">00</td>
+<td>0</td>
 </tr>
 <tr>
-<td>Best A*-search-based result (Chapter <a href="#Ch5">5</a>)</td>
-<td>59.89</td>
-<td>5.231</td>
-<td>30</td>
+<td class="b-db">Best A*-search-based result (Chapter <a href="#Ch5">5</a>)</td>
+<td class="b-db">59.89</td>
+<td class="b-db">5.231</td>
+<td class="b-db">30</td>
 </tr>
 <tr>
 <td>Greedy generation in a 2-step setup with t-trees</td>
@@ -580,10 +610,10 @@ BAGEL data set <cite>(Mairesse et al., <a href="#bib.bib20">2010</a>)</cite>, wi
 <td>28</td>
 </tr>
 <tr>
-<td> + Reranker</td>
-<td>60.44</td>
-<td>5.514</td>
-<td>19</td>
+<td class="b-db"> + Reranker</td>
+<td class="b-db">60.44</td>
+<td class="b-db">5.514</td>
+<td class="b-db">19</td>
 </tr>
 <tr>
 <td>Greedy direct generation of strings</td>
@@ -598,10 +628,10 @@ BAGEL data set <cite>(Mairesse et al., <a href="#bib.bib20">2010</a>)</cite>, wi
 <td>32</td>
 </tr>
 <tr>
-<td> + Reranker</td>
-<td>62.76</td>
-<td>5.669</td>
-<td>19</td>
+<td class="b-db"> + Reranker</td>
+<td class="b-db">62.76</td>
+<td class="b-db">5.669</td>
+<td class="b-db">19</td>
 </tr>
 </tbody>
 </table>
@@ -649,13 +679,13 @@ It improves upon a context-oblivious baseline in terms of both automatic metrics
 7.1 Collecting a Context-Aware NLG Dataset</h3>
 
 <figure id="Ch7.F1">
-<table>
+<table class="bottom-bind">
 <tr>
 <td><span  style="font-size:90%;color:#333399;">inform(</td>
 <td><span  style="font-size:90%;color:#333399;">line=M102, direction=“Herald Square”, vehicle=bus,</td>
 </tr>
 <tr>
-<td><span  style="font-size:90%;">.</td>
+<td><span  style="font-size:90%;"></td>
 <td><span  style="font-size:90%;color:#333399;">departure_time=9:01am, from_stop=“Wall Street”)</td>
 </tr>
 </table>
@@ -664,18 +694,18 @@ It improves upon a context-oblivious baseline in terms of both automatic metrics
 <td><span  style="font-size:90%;">Take bus line M102 from Wall Street to Herald Square at 9:01am.</td>
 </tr>
 </table>
-<table>
+<table class="bottom-bind">
 <tr>
 <td><span  style="font-size:90%;color:#BF8040;">is there another option</td>
 </tr>
 </table>
-<table>
+<table class="bottom-bind">
 <tr>
 <td><span  style="font-size:90%;color:#333399;">inform(</td>
 <td><span  style="font-size:90%;color:#333399;">line=M102, direction=“Herald Square”, vehicle=bus,</td>
 </tr>
 <tr>
-<td><span  style="font-size:90%;">.</td>
+<td></td>
 <td><span  style="font-size:90%;color:#333399;">departure_time=9:01am, from_stop=“Wall Street”)</td>
 </tr>
 </table>
@@ -686,12 +716,12 @@ It improves upon a context-oblivious baseline in terms of both automatic metrics
 </td>
 </tr>
 </table>
-<figcaption  style="font-size:90%;">Figure 7.1: A comparison of an ordinary NLG training instance (top) and a context-aware one (bottom).</figcaption>
+<figcaption>Figure 7.1: A comparison of an ordinary NLG training instance (top) and a context-aware one (bottom).</figcaption>
 <p><span  style="font-size:90%;">The context-aware instance includes the preceding user utterance (context), the input DA, and a context-appropriate output sentence (with entrainment highlighted).</p>
 </figure>
 <div id="Ch7.S1.p1">
 <p>We
-collected a new NLG dataset for SDSs that is, to our knowledge, the first dataset of its kind to include preceding context (user utterance) with each data instance (see Figure <a href="#Ch7.F1">7.1</a>).<sup>2</sup><sup>2</sup>To prevent data sparsity issues, we only take into account the immediately preceding user utterance, which we believe has the largest entrainment potential.
+collected a new NLG dataset for SDSs that is, to our knowledge, the first dataset of its kind to include preceding context (user utterance) with each data instance (see Figure <a href="#Ch7.F1">7.1</a>).<sup>2</sup><sup>2</sup> To prevent data sparsity issues, we only take into account the immediately preceding user utterance, which we believe has the largest entrainment potential.
 Crowdsourcing was used to obtain both the contextual user utterances and the corresponding system responses to be generated.
 The dataset contains over 5,500 instances with more than 500 distinct context utterances from the domain of public transport information.
 It is released under a permissive Creative Commons 4.0 BY-SA license.<sup>3</sup><sup>3</sup>Archival version is available at <a href="http://hdl.handle.net/11234/1-1675">http://hdl.handle.net/11234/1-1675</a>, development version at <a href="https://github.com/UFAL-DSG/alex_context_nlg_dataset">https://github.com/UFAL-DSG/alex_context_nlg_dataset</a>.</p>
@@ -728,45 +758,45 @@ we enhanced its architecture in two alternative ways, which condition generation
 7.3 Experiments</h3>
 
 <figure id="Ch7.T1">
-<table>
+<table class="wider">
 <thead>
 <tr>
-<th>Setup</th>
-<th>BLEU</th>
-<th>NIST</th>
+<th class="b-tb">Setup</th>
+<th class="b-tb">BLEU</th>
+<th class="b-tb">NIST</th>
 </tr>
 </thead>
 <tbody>
 <tr>
-<th>Baseline (context not used)</th>
+<th class="a-l">Baseline (context not used)</th>
 <td>66.41</td>
 <td>7.037</td>
 </tr>
 <tr>
-<th>
+<th class="a-l">
 <math id="Ch7.T1.m1"  alttext="n" display="inline"><mi>n</mi></math>-gram match reranker</th>
 <td>68.68</td>
 <td>7.577</td>
 </tr>
 <tr>
-<th>Prepending context</th>
+<th class="a-l">Prepending context</th>
 <td>63.87</td>
 <td>6.456</td>
 </tr>
 <tr>
-<th> + <math id="Ch7.T1.m2"  alttext="n" display="inline"><mi>n</mi></math>-gram match reranker</th>
+<th class="a-l"> + <math id="Ch7.T1.m2"  alttext="n" display="inline"><mi>n</mi></math>-gram match reranker</th>
 <td>69.26</td>
 <td>7.772</td>
 </tr>
 <tr>
-<th>Context encoder</th>
+<th class="a-l">Context encoder</th>
 <td>63.08</td>
 <td>6.818</td>
 </tr>
 <tr>
-<th> + <math id="Ch7.T1.m3"  alttext="n" display="inline"><mi>n</mi></math>-gram match reranker</th>
-<td>69.17</td>
-<td>7.596</td>
+<th class="a-l b-b"> + <math id="Ch7.T1.m3"  alttext="n" display="inline"><mi>n</mi></math>-gram match reranker</th>
+<td class="b-b">69.17</td>
+<td class="b-b">7.596</td>
 </tr>
 </tbody>
 </table>
@@ -860,17 +890,17 @@ This should reduce data sparsity by abstracting away from word inflection while 
 8.3 Experiments</h3>
 
 <figure id="Ch8.T1">
-<table>
+<table class="wider">
 <tbody>
 <tr>
-<th  colspan="3">Setup</th>
-<th  rowspan="2">BLEU</th>
-<th  rowspan="2">NIST</th>
+<th  colspan="3" class="b-t">Setup</th>
+<th  rowspan="2" class="b-tb">BLEU</th>
+<th  rowspan="2" class="b-tb">NIST</th>
 </tr>
 <tr>
-<th>input DAs</th>
-<th>generator mode</th>
-<th>lexicalization</th>
+<th class="b-b">input DAs</th>
+<th class="b-b">generator mode</th>
+<th class="b-b">lexicalization</th>
 </tr>
 <tr>
 <td>delexicalized</td>
@@ -894,11 +924,11 @@ This should reduce data sparsity by abstracting away from word inflection while 
 <td>4.094</td>
 </tr>
 <tr>
-<td>lexically informed</td>
-<td>lemma-tag</td>
-<td>most frequent</td>
-<td>20.86</td>
-<td>4.427</td>
+<td class="b-b">lexically informed</td>
+<td class="b-b">lemma-tag</td>
+<td class="b-b">most frequent</td>
+<td class="b-b">20.86</td>
+<td class="b-b">4.427</td>
 </tr>
 <tr>
 <td>lexically informed</td>
@@ -924,28 +954,28 @@ This should reduce data sparsity by abstracting away from word inflection while 
 </tr>
 </tbody>
 </table>
-<figcaption>Table 8.1: Performance of selected generator setups in terms BLEU and NIST.</figcaption>
+<figcaption>Table 8.1: Performance of selected generator setups in terms of BLEU and NIST.</figcaption>
 </figure>
 <figure id="Ch8.T2">
-<table>
+<table class="wider">
 <tbody>
 <tr>
-<td  colspan="3">Setup</td>
-<td>True</td>
-<td  rowspan="2">Rank</td>
+<th  colspan="3" class="b-t">Setup</th>
+<th class="b-t">True</th>
+<th  rowspan="2" class="b-tb">Rank</th>
 </tr>
 <tr>
-<td>input DAs</td>
-<td>generator mode</td>
-<td>lexicalization</td>
-<td>Skill</td>
+<th class="b-b">input DAs</th>
+<th class="b-b">generator mode</th>
+<th class="b-b">lexicalization</th>
+<th class="b-b">Skill</th>
 </tr>
 <tr>
-<td>delexicalized</td>
-<td>joint (direct to strings)</td>
-<td>RNN LM</td>
-<td>0.511</td>
-<td>1</td>
+<td class="b-db">delexicalized</td>
+<td class="b-db">joint (direct to strings)</td>
+<td class="b-db">RNN LM</td>
+<td class="b-db">0.511</td>
+<td class="b-db">1</td>
 </tr>
 <tr>
 <td>
@@ -964,19 +994,19 @@ delexicalized</td>
 </td>
 </tr>
 <tr>
-<td>lexically informed</td>
-<td>lemma-tag</td>
-<td>most frequent</td>
-<td>0.462</td>
-<td>2-4</td>
+<td class="b-db">lexically informed</td>
+<td class="b-db">lemma-tag</td>
+<td class="b-db">most frequent</td>
+<td class="b-db">0.462</td>
+<td class="b-db">2-4</td>
 </tr>
 <tr>
-<td>
+<td class="b-db">
 lexically informed</td>
-<td>joint (direct to strings)</td>
-<td>RNN LM</td>
-<td>0.413</td>
-<td>5</td>
+<td class="b-db">joint (direct to strings)</td>
+<td class="b-db">RNN LM</td>
+<td class="b-db">0.413</td>
+<td class="b-db">5</td>
 </tr>
 <tr>
 <td>
@@ -987,12 +1017,12 @@ lexically informed</td>
 <td>6-7</td>
 </tr>
 <tr>
-<td>lexically informed</td>
-<td>lemma-tag</td>
-<td>
+<td class="b-b">lexically informed</td>
+<td class="b-b">lemma-tag</td>
+<td class="b-b">
 <math id="Ch8.T2.m2"  alttext="n" display="inline"><mi>n</mi></math>-gram LM</td>
-<td>0.329</td>
-<td>6-7</td>
+<td class="b-b">0.329</td>
+<td class="b-b">6-7</td>
 </tr>
 </tbody>
 </table>
