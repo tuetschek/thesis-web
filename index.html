@@ -9,15 +9,18 @@
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Sans">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Noto+Serif">
 <style>
-h1, h2, h3, h4, h5, h6 {
+h1, h2, h3, h4, h5 {
   font-family: "Noto Sans", sans-serif;
 }
 h2 {
   margin-top: 2em;
   background: #ddd;
 }
-html, body {
+html, body, h6 {
   font-family: "Noto Serif", serif;
+}
+h6 {
+    font-weight: bold;
 }
 body {
     max-width: 900px;
@@ -30,6 +33,9 @@ figure, table {
 }
 table.bottom-bind {
     padding-bottom: 0;
+}
+table.top-bind {
+    padding-top: 0;
 }
 table.wider td, table.wider th {
     padding-right: 0.5em;
@@ -55,6 +61,15 @@ figcaption {
 }
 cite {
     font-style: normal;
+}
+span.w3-dropdown-content {
+    padding: 0.5em;
+    font-size: 90%;
+    border: 1px solid gray;
+}
+span.w3-dropdown-content a {
+    display: inline;
+    padding: 0;
 }
 </style>
 </head>
@@ -646,7 +661,7 @@ The occasional errors are of different types in the two setups: while the joint 
 </div>
 <div id="Ch6.S2.p3">
 <p>A comparison of the two approaches goes in favor of the joint setup, which offers better performance and does not need an external surface realizer.
-Both setups surpass the previous best results achieved in Chapter <a href="#Ch5">5</a>.<sup>1</sup><sup>1</sup>The BLEU/NIST differences are statistically significant according to the pairwise bootstrap resampling test <cite>(Koehn, <a href="#bib.bib68">2004</a>)</cite>.</p>
+Both setups surpass the previous best results achieved in Chapter <a href="#Ch5">5</a>.<span class="w3-dropdown-hover"><sup>1</sup><span class="w3-dropdown-content"><sup>1</sup>The BLEU/NIST differences are statistically significant according to the pairwise bootstrap resampling test <cite>(Koehn, <a href="#bib.bib68">2004</a>)</cite>.</span></span></p>
 </div>
 <div id="Ch6.S2.p4">
 <p>We also trained our system on the larger restaurant dataset of <cite>Wen et al. (<a href="#bib.bib99">2015a</a>)</cite> to perform a direct comparison of our system’s performance to theirs. Our system performed comparably, offering slightly lower BLEU score (72.7% vs. 73.1%) but slightly lower number of semantic errors (slot error rate of 0.41% vs. 0.46%).</p>
@@ -689,7 +704,7 @@ It improves upon a context-oblivious baseline in terms of both automatic metrics
 <td><span  style="font-size:90%;color:#333399;">departure_time=9:01am, from_stop=“Wall Street”)</td>
 </tr>
 </table>
-<table>
+<table class="top-bind">
 <tr>
 <td><span  style="font-size:90%;">Take bus line M102 from Wall Street to Herald Square at 9:01am.</td>
 </tr>
@@ -699,7 +714,7 @@ It improves upon a context-oblivious baseline in terms of both automatic metrics
 <td><span  style="font-size:90%;color:#BF8040;">is there another option</td>
 </tr>
 </table>
-<table class="bottom-bind">
+<table class="bottom-bind top-bind">
 <tr>
 <td><span  style="font-size:90%;color:#333399;">inform(</td>
 <td><span  style="font-size:90%;color:#333399;">line=M102, direction=“Herald Square”, vehicle=bus,</td>
@@ -709,7 +724,7 @@ It improves upon a context-oblivious baseline in terms of both automatic metrics
 <td><span  style="font-size:90%;color:#333399;">departure_time=9:01am, from_stop=“Wall Street”)</td>
 </tr>
 </table>
-<table>
+<table class="top-bind">
 <tr>
 <td>
 <span  style="font-size:90%;color:#BF0040;">There is<span  style="font-size:90%;"> a bus at 9:01am from Wall Street to Herald Square using line M102.
@@ -721,10 +736,10 @@ It improves upon a context-oblivious baseline in terms of both automatic metrics
 </figure>
 <div id="Ch7.S1.p1">
 <p>We
-collected a new NLG dataset for SDSs that is, to our knowledge, the first dataset of its kind to include preceding context (user utterance) with each data instance (see Figure <a href="#Ch7.F1">7.1</a>).<sup>2</sup><sup>2</sup> To prevent data sparsity issues, we only take into account the immediately preceding user utterance, which we believe has the largest entrainment potential.
+collected a new NLG dataset for SDSs that is, to our knowledge, the first dataset of its kind to include preceding context (user utterance) with each data instance (see Figure <a href="#Ch7.F1">7.1</a>).<span class="w3-dropdown-hover"><sup>2</sup><span class="w3-dropdown-content"><sup>2</sup> To prevent data sparsity issues, we only take into account the immediately preceding user utterance, which we believe has the largest entrainment potential.</span></span>
 Crowdsourcing was used to obtain both the contextual user utterances and the corresponding system responses to be generated.
 The dataset contains over 5,500 instances with more than 500 distinct context utterances from the domain of public transport information.
-It is released under a permissive Creative Commons 4.0 BY-SA license.<sup>3</sup><sup>3</sup>Archival version is available at <a href="http://hdl.handle.net/11234/1-1675">http://hdl.handle.net/11234/1-1675</a>, development version at <a href="https://github.com/UFAL-DSG/alex_context_nlg_dataset">https://github.com/UFAL-DSG/alex_context_nlg_dataset</a>.</p>
+It is released under a permissive Creative Commons 4.0 BY-SA license.<span class="w3-dropdown-hover"><sup>3</sup><span class="w3-dropdown-content"><sup>3</sup>Archival version is available at <a href="http://hdl.handle.net/11234/1-1675">http://hdl.handle.net/11234/1-1675</a>, development version at <a href="https://github.com/UFAL-DSG/alex_context_nlg_dataset">https://github.com/UFAL-DSG/alex_context_nlg_dataset</a>.</span></span></p>
 </div>
 <figure id="Ch7.F2"><img src="figs/x8.png" id="Ch7.F2.g1"  width="676" height="257" alt="">
 <figcaption>Figure 7.2: Context-aware modifications to the main seq2seq generator.</figcaption>
@@ -810,7 +825,7 @@ Both seq2seq model extensions result in lowered scores if used by themselves, bu
 </div>
 <div id="Ch7.S3.p2">
 <p>We evaluated the best-performing setting (prepending context with <math id="Ch7.S3.p2.m1"  alttext="n" display="inline"><mi>n</mi></math>-gram match reranker) in a blind pairwise preference test against the baseline (cf. Section <a href="#Ch3.S5">3.5</a>) with untrained judges recruited on the CrowdFlower crowdsourcing platform.
-The judges preferred the context-aware system output in 52.5% cases, slightly but significantly more often than the baseline.<sup>4</sup><sup>4</sup>Differences have been confirmed at 99% statistical significance level by pairwise bootstrap resampling <cite>(Koehn, <a href="#bib.bib68">2004</a>)</cite> for both BLEU/NIST scores and human judgments.</p>
+The judges preferred the context-aware system output in 52.5% cases, slightly but significantly more often than the baseline.<span class="w3-dropdown-hover"><sup>4</sup><span class="w3-dropdown-content"><sup>4</sup>Differences have been confirmed at 99% statistical significance level by pairwise bootstrap resampling <cite>(Koehn, <a href="#bib.bib68">2004</a>)</cite> for both BLEU/NIST scores and human judgments.</span></span></p>
 </div>
 </section>
 </section>
@@ -819,18 +834,30 @@ The judges preferred the context-aware system output in 52.5% cases, slightly bu
 8&nbsp;&nbsp; Generating Czech</h2>
 
 <figure id="Ch8.F1">
-<p><span  style="font-size:90%;color:#333399;">inform(name=“Café Savoy”, food=Mexican)<span  style="color:black;">
-\gllCafé Savoy nabízí mexická jídla.
-Café Savoy\textsubscriptnominative offers Mexican foods.
-\gln\glend</p>
-<p><span  style="font-size:90%;color:#333399;">inform(name=“Café Savoy”, price_range=moderate)<span  style="color:black;">
-\gllKavárna Savoy je hezká restaurace se středními cenami.
-Café Savoy\textsubscriptnominative is a nice restaurant with moderate prices.
-\gln\glend</p>
-<p><span  style="font-size:90%;color:#333399;">inform(name=“Café Savoy”, phone=293808716)<span  style="color:black;">
-\gllTelefonní číslo do Kavárny Savoy je 293270464
-The phone number to Café Savoy\textsubscriptgenitive is 293270464
-\gln\glend</p>
+<table class="wider" style="font-size:90%">
+<tr>
+<td colspan="4"><span  style="color:#333399;">inform(name=“Café Savoy”, food=Mexican)</span></td>
+</tr>
+<tr>
+<td><strong>Café Savoy</strong></td><td>nabízí</td><td>mexická</td><td>jídla.</td>
+</tr>
+<tr>
+<td>Café Savoy<sub><em>nominative</em></sub></td><td>offers</td><td>Mexican</td><td>foods.</td>
+</tr>
+</table>
+<table class="wider" style="font-size:90%">
+<tr>
+<td colspan="7"><span  style="color:#333399;">inform(name=“Café Savoy”, price_range=moderate)<span  style="color:black;"></td></tr>
+<tr>
+<td><strong>Kavárna Savoy</strong></td><td>je</td><td>hezká</td><td>restaurace</td><td>se</td><td>středními</td><td>cenami.</td>
+</tr><tr>
+<td>Café Savoy<sub><em>nominative</em></sub></td><td>is</td><td>a nice</td><td>restaurant</td><td>with</td><td>moderate</td><td>prices.</td></tr>
+</table>
+<table class="wider" style="font-size:90%">
+<tr><td colspan="6"><span  style="color:#333399;">inform(name=“Café Savoy”, phone=293808716)</span></td></tr>
+<tr><td>Telefonní</td><td>číslo</td><td>do</td><td><strong>Kavárny Savoy</strong></td><td>je</td><td>293270464</td></tr>
+<tr><td>The phone</td><td>number</td><td>to</td><td>Café Savoy<sub><em>genitive</em></sub></td><td>is</td><td>293270464</td></tr>
+</table>
 <figcaption>Figure 8.1: Examples from our dataset showing three different surface forms for the DA slot value “Café Savoy” (with two synonymous lemmas, “café” and “kavárna”).</figcaption>
 </figure>
 <figure id="Ch8.F2"><img src="figs/x9.png" id="Ch8.F2.g1"  width="676" height="131" alt="">
@@ -850,7 +877,7 @@ In this chapter, we apply our seq2seq NLG system to Czech, introduce a few impro
 <div id="Ch8.S1.p1">
 <p>Since no suitable dataset existed for Czech NLG (same as most other non-English languages), we needed to create a new one.
 To reduce costs, speed up the process, and work around the lack of Czech speakers on crowdsourcing platforms <cite>(Pavlick et al., <a href="#bib.bib254">2014</a>)</cite>, we localized an existing English set – <cite>Wen et al. (<a href="#bib.bib99">2015a</a>)</cite>’s 5,000 instances on restaurant information – and had it translated by freelance translators.
-We released the data under the Creative Commons 4.0 BY-SA license.<sup>5</sup><sup>5</sup>The set can be downloaded from <a href="http://hdl.handle.net/11234/1-2123">http://hdl.handle.net/11234/1-2123</a>, a development version is available at <a href="https://github.com/UFAL-DSG/cs_restaurant_dataset">https://github.com/UFAL-DSG/cs_restaurant_dataset</a>.
+We released the data under the Creative Commons 4.0 BY-SA license.<span class="w3-dropdown-hover"><sup>5</sup><span class="w3-dropdown-content"><sup>5</sup>The set can be downloaded from <a href="http://hdl.handle.net/11234/1-2123">http://hdl.handle.net/11234/1-2123</a>, a development version is available at <a href="https://github.com/UFAL-DSG/cs_restaurant_dataset">https://github.com/UFAL-DSG/cs_restaurant_dataset</a>.</span></span>
 The result shows that DA slot values, such as restaurant names, have more possible lexical realizations and need to be inflected (see Figure <a href="#Ch8.F1">8.1</a>).</p>
 </div>
 </section>
@@ -862,14 +889,14 @@ The result shows that DA slot values, such as restaurant names, have more possib
 <p>We use the seq2seq approach described in Chapter <a href="#Ch6">6</a> as the base of our experiments and add the following extensions to better accommodate for Czech:</p>
 </div>
 <section id="Ch8.S2.SS0.SSS0.Px1">
-<h4>Input DA handling.</h4>
+<h6>Input DA handling.</h6>
 
 <div id="Ch8.S2.SS0.SSS0.Px1.p1">
 <p>As DA slot values may influence output shape (e.g., require a specific preposition), we experiment with <em>lexically-informed</em> generation <cite>(Sharma et al., <a href="#bib.bib163">2016</a>)</cite>: the input DA is lexicalized and values are taken into account during generation, but the output still contains placeholders and lexicalization is performed separately (to avoid data sparsity problems).</p>
 </div>
 </section>
 <section id="Ch8.S2.SS0.SSS0.Px2">
-<h4>Lemma-tag generation.</h4>
+<h6>Lemma-tag generation.</h6>
 
 <div id="Ch8.S2.SS0.SSS0.Px2.p1">
 <p>This is a third generator mode in addition to the two-step approach with t-trees and a joint end-to-end setup.
@@ -878,7 +905,7 @@ This should reduce data sparsity by abstracting away from word inflection while 
 </div>
 </section>
 <section id="Ch8.S2.SS0.SSS0.Px3">
-<h4>Lexicalization.</h4>
+<h6>Lexicalization.</h6>
 
 <div id="Ch8.S2.SS0.SSS0.Px3.p1">
 <p>We implement four different approaches to selecting one of the multiple possible surface forms for a DA slot value (see Figure <a href="#Ch8.F1">8.1</a>): a random baseline, a baseline selecting the most frequent surface form, an <math id="Ch8.S2.SS0.SSS0.Px3.p1.m1"  alttext="n" display="inline"><mi>n</mi></math>-gram language model (LM), and a RNN-based LM. Both language models estimate the probability of possible surface forms based on preceding tokens in the sentence.</p>
@@ -946,11 +973,11 @@ This should reduce data sparsity by abstracting away from word inflection while 
 <td>4.448</td>
 </tr>
 <tr>
-<td>lexically informed</td>
-<td>two-step with t-trees</td>
-<td>RNN LM</td>
-<td>17.62</td>
-<td>4.112</td>
+<td class="b-b">lexically informed</td>
+<td class="b-b">two-step with t-trees</td>
+<td class="b-b">RNN LM</td>
+<td class="b-b">17.62</td>
+<td class="b-b">4.112</td>
 </tr>
 </tbody>
 </table>
@@ -1054,27 +1081,27 @@ On the other hand, the RNN-based surface form selection clearly pays off.
 <p>The main contributions of our thesis addressing the individual objectives set in Chapter <a href="#Ch1">1</a> are as follows:</p>
 </div>
 <section id="Ch9.S3.SS0.SSS0.Px1">
-<h4>
-<a href="#Ch1.S1">A</a>)  Generator easily adaptable for different domains.</h4>
+<h6>
+<a href="#Ch1.S1">A</a>)  Generator easily adaptable for different domains.</h6>
 
 <div id="Ch9.S3.SS0.SSS0.Px1.p1">
 <p>In Chapter <a href="#Ch5">5</a>, we developed an A*-search-based NLG system that is trainable from pairs of natural language sentences and corresponding dialogue acts, without the need for fine-grained semantic alignments, thus greatly simplifying training data collection for NLG. It was the first NLG system to learn alignments jointly with sentence planning. This system has then been superseded by a new, seq2seq-based one in terms of both speed and output quality, as described in Chapter <a href="#Ch6">6</a>. The seq2seq-based system reached new state-of-the-art without fine-grained alignments on the small BAGEL dataset <cite>(Mairesse et al., <a href="#bib.bib20">2010</a>)</cite>, using much less training data than other RNN-based approaches. The two NLG systems were described in <cite>(Dušek and Jurčíček, <a href="#bib.bib101">2015</a>)</cite> and <cite>(Dušek and Jurčíček, <a href="#bib.bib216">2016c</a>)</cite>, respectively.</p>
 </div>
 </section>
 <section id="Ch9.S3.SS0.SSS0.Px2">
-<h4>
-<a href="#Ch1.S1">B</a>)  Generator easily adaptable to different languages.</h4>
+<h6>
+<a href="#Ch1.S1">B</a>)  Generator easily adaptable to different languages.</h6>
 
 <div id="Ch9.S3.SS0.SSS0.Px2.p1">
-<p>We developed a simple, domain-independent surface realizer from the t-trees deep syntax formalism (see Section <a href="#Ch3.S4">3.4</a>) for English, similar to an older Czech realizer <cite>(Žabokrtský et al., <a href="#bib.bib42">2008</a>)</cite>. We simplified the creation of new t-tree realizers by creating a novel statistical morphological inflection module which generalizes to previously unseen word forms (see Chapter <a href="#Ch4">4</a>). The English realizer was described in <cite>(Dušek et al., <a href="#bib.bib112">2015</a>)</cite>, and we reported on the morphological inflection module in <cite>(Dušek and Jurčíček, <a href="#bib.bib2">2013</a>)</cite>. Parts of the realizer were later reused in machine translation <cite>(Popel et al., <a href="#bib.bib195">2015</a>; Aranberri et al., <a href="#bib.bib212">2016</a>)</cite>.</p>
+<p>We developed a simple, domain-independent surface realizer from the t-trees deep syntax formalism (see Section <a href="#Ch3.S4">3.4</a>) for English, similar to an older Czech realizer <cite>(Žabokrtský et al., <a href="#bib.bib42">2008</a>)</cite>. We simplified the creation of new t-tree realizers by creating a novel statistical morphological inflection module which generalizes to previously unseen word forms (see Chapter <a href="#Ch6">4</a>). The English realizer was described in <cite>(Dušek et al., <a href="#bib.bib112">2015</a>)</cite>, and we reported on the morphological inflection module in <cite>(Dušek and Jurčíček, <a href="#bib.bib2">2013</a>)</cite>. Parts of the realizer were later reused in machine translation <cite>(Popel et al., <a href="#bib.bib195">2015</a>; Aranberri et al., <a href="#bib.bib212">2016</a>)</cite>.</p>
 </div>
 <div id="Ch9.S3.SS0.SSS0.Px2.p2">
 <p>In Chapter <a href="#Ch8">8</a>, we applied our seq2seq-based generator to Czech, addressing problems not present in English – larger vocabulary and the need to inflect proper names (DA slot values). We show that our seq2seq-based generator is able to produce mostly correct and fluent sentence structures without any significant changes, apart from proper name inflection, where our RNN-LM-based module significantly outperforms a strong baseline.</p>
 </div>
 </section>
 <section id="Ch9.S3.SS0.SSS0.Px3">
-<h4>
-<a href="#Ch1.S1">C</a>)  Generator that adapts to the user.</h4>
+<h6>
+<a href="#Ch1.S1">C</a>)  Generator that adapts to the user.</h6>
 
 <div id="Ch9.S3.SS0.SSS0.Px3.p1">
 <p>Mimicking human behavior in dialogue, where interlocutors adapt their wording and syntax to each other, we extended our seq2seq generator in Chapter <a href="#Ch7">7</a> to reflect not only the input DA, but also the previous user request, thus enabling it to create responses appropriate in the preceding dialogue context and providing it with a natural
@@ -1083,8 +1110,8 @@ This result has been described in <cite>(Dušek and Jurčíček, <a href="#bib.b
 </div>
 </section>
 <section id="Ch9.S3.SS0.SSS0.Px4">
-<h4>
-<a href="#Ch1.S1">D</a>)  Comparing different NLG system architectures.</h4>
+<h6>
+<a href="#Ch1.S1">D</a>)  Comparing different NLG system architectures.</h6>
 
 <div id="Ch9.S3.SS0.SSS0.Px4.p1">
 <p>In Chapters <a href="#Ch6">6</a> and <a href="#Ch8">8</a>, we compare two different NLG architectures: a two-step pipeline using separate sentence planning and surface realization modules and a joint setup generating surface strings directly. We are able to use the same seq2seq model for both setups, generating t-trees (deep syntax postprocessed by a surface realizer) or surface word forms (in an end-to-end fashion).
@@ -1094,16 +1121,16 @@ Experiments for English from Chapter <a href="#Ch6">6</a> were described in <ci
 </div>
 </section>
 <section id="Ch9.S3.SS0.SSS0.Px5">
-<h4>
-<a href="#Ch1.S1">E</a>)  Dataset availability for NLG in SDSs.</h4>
+<h6>
+<a href="#Ch1.S1">E</a>)  Dataset availability for NLG in SDSs.</h6>
 
 <div id="Ch9.S3.SS0.SSS0.Px5.p1">
-<p>To perform our experiments in Chapters <a href="#Ch7">7</a> and <a href="#Ch8">8</a>, we have created two novel datasets for NLG, which are freely available under a permissive license:<sup>6</sup><sup>6</sup>Available at <a href="https://github.com/UFAL-DSG/alex_context_nlg_dataset">https://github.com/UFAL-DSG/alex_context_nlg_dataset</a>, <a href="https://github.com/UFAL-DSG/cs_restaurant_dataset">https://github.com/UFAL-DSG/cs_restaurant_dataset</a> under the Creative Commons 4.0 BY-SA license. the first NLG dataset for Czech, which is also the biggest freely available non-English NLG dataset, and the first NLG dataset using preceding dialogue context and specifically targeted at adapting system responses to the user. The latter set is also described in <cite>(Dušek and Jurčíček, <a href="#bib.bib225">2016a</a>)</cite>.</p>
+<p>To perform our experiments in Chapters <a href="#Ch7">7</a> and <a href="#Ch8">8</a>, we have created two novel datasets for NLG, which are freely available under a permissive license:<span class="w3-dropdown-hover"><sup>6</sup><span class="w3-dropdown-content"><sup>6</sup>Available at <a href="https://github.com/UFAL-DSG/alex_context_nlg_dataset">https://github.com/UFAL-DSG/alex_context_nlg_dataset</a>, <a href="https://github.com/UFAL-DSG/cs_restaurant_dataset">https://github.com/UFAL-DSG/cs_restaurant_dataset</a> under the Creative Commons 4.0 BY-SA license.</span></span> the first NLG dataset for Czech, which is also the biggest freely available non-English NLG dataset, and the first NLG dataset using preceding dialogue context and specifically targeted at adapting system responses to the user. The latter set is also described in <cite>(Dušek and Jurčíček, <a href="#bib.bib225">2016a</a>)</cite>.</p>
 </div>
 <div id="Ch9.S3.SS0.SSS0.Px5.p2">
 <br>
 <p>In sum, our work constitutes significant advances along all of the preset objectives.
-In a few aspects, it leaves room for improvement in future work as some of the experiments on dialogue alignment and Czech generation were rather limited. Nevertheless, our generator is fully functional and usable in practice, within a spoken dialogue system or in a standalone setting. It is freely available for download from GitHub.<sup>7</sup><sup>7</sup>Available at <a href="https://github.com/UFAL-DSG/tgen">https://github.com/UFAL-DSG/tgen</a> under the Apache 2.0 license.</p>
+In a few aspects, it leaves room for improvement in future work as some of the experiments on dialogue alignment and Czech generation were rather limited. Nevertheless, our generator is fully functional and usable in practice, within a spoken dialogue system or in a standalone setting. It is freely available for download from GitHub.<span class="w3-dropdown-hover"><sup>7</sup><span class="w3-dropdown-content"><sup>7</sup>Available at <a href="https://github.com/UFAL-DSG/tgen">https://github.com/UFAL-DSG/tgen</a> under the Apache 2.0 license.</span></span></p>
 </div>
 <div id="Ch9.S3.SS0.SSS0.Px5.p3">
 <p>In future work, we would like to widen the user adaptation experiment by taking the whole dialogue into account.
@@ -1385,7 +1412,7 @@ Cited by: <a href="#Ch3.S5.p1">3.5</a>.
 
 </li>
 <li id="bib.bib32">
-J. Hajič, M. Ciaramita, R. Johansson, D. Kawahara, M. Martí, L. MÃ rquez, A. Meyers, J. Nivre, S. PadÃ³ and J. Å tÄpánek (2009)
+J. Hajič, M. Ciaramita, R. Johansson, D. Kawahara, M. Martí, L. Màrquez, A. Meyers, J. Nivre, S. Padó and J. Štěpánek (2009)
 The CoNLL-2009 shared task: syntactic and semantic dependencies in multiple languages.
 
 In Proceedings of the Thirteenth Conference on Computational Natural Language Learning: Shared Task,
